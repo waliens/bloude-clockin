@@ -2,18 +2,15 @@
 
 ## Lister ses personnages
 Permet de renseigner sa liste de personnages et son main, à faire une fois par personnage pour lequel c'est pertinent. 
-Par défaut `@user` réfère à utilisateur courant (si pas indiqué à l'appel de la commande). Seuls les admins peuvent lancer la commande pour d'autres users.
+Par défaut `@user` réfère à utilisateur courant (si pas indiqué à l'appel de la commande). 
+**ADMIN** Seuls les admins peuvent lancer la commande pour d'autres users qu'eux.
 ```
 /character add [@user] (menu sequence: character? > class? > role?)
 /character delete [@user] (menu sequence: character?) 
 /character update [@user] (menu sequence: character? > newname?)
 /character main [@user] (menu sequence: character) 
-```
-
-**ADMIN** Liste les personnages d'un utilisateur:
-```
 /characters [@user] (list all characters)
-``` 
+```
 
 ## Jetons de présence
 À chaque sortie raid "hors-guilde", chaque joueur doit indiquer sa sortie: avec quel personnage (s'il en a renseigné plusieurs, voir ci dessus) et dans quel raid
