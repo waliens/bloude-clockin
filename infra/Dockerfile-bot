@@ -1,0 +1,9 @@
+FROM python:3.10.5-alpine3.16
+
+RUN pip install -U py-cord
+RUN pip install python-dotenv
+
+WORKDIR /bot
+
+ADD source/main.py /bot/main.py
+CMD [ "python3", "main.py" ]
