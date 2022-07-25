@@ -7,15 +7,15 @@ RUN pip install alembic asyncpg
 
 WORKDIR /bot
 
-ADD src/main.py ./main.py
+ADD src/alembic.ini ./alembic.ini
 ADD src/bci.py ./bci.py
-ADD src/models.py ./models.py
 ADD src/database.py ./database.py
-ADD src/__init__.py ./__init__.py
+ADD src/exceptions.py ./exceptions.py
+ADD src/main.py ./main.py
+ADD src/models.py ./models.py
 
 ADD src/cogs ./cogs
-
 ADD src/alembic ./alembic
-ADD src/alembic.ini ./alembic.ini
+ADD src/db_util ./db_util
 
 CMD [ "python3", "main.py" ]
