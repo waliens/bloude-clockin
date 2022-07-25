@@ -1,4 +1,5 @@
 import logging
+from discord import slash_command, user_command
 from discord.ext import commands
 from database import init_db
 
@@ -16,12 +17,3 @@ class BloudeClockInBot(commands.Bot):
   async def on_ready(self):
     self._db_session, self._db_engine = await init_db()
     logging.getLogger().info("Bot `{}` is running.".format(self.__class__))
-    
-
-  @commands.slash_command() # create a slash command
-  async def bb(self, ctx):
-    await ctx.respond('Bloudiens, bloudiennes!')
-
-  @commands.user_command(name="Say Hello")
-  async def hi(self, ctx, user):
-    await ctx.respond(f"{ctx.author.mention} says hello to {user.name}!")
