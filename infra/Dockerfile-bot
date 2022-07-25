@@ -2,8 +2,20 @@ FROM python:3.10.5-alpine3.16
 
 RUN pip install -U py-cord
 RUN pip install python-dotenv
+RUN pip install sqlalchemy[asyncio] sqlalchemy-utils
+RUN pip install alembic asyncpg
 
 WORKDIR /bot
 
-ADD source/main.py /bot/main.py
+ADD src/main.py ./main.py
+ADD src/bci.py ./bci.py
+ADD src/models.py ./models.py
+ADD src/database.py ./database.py
+ADD src/__init__.py ./__init__.py
+
+ADD src/cogs ./cogs
+
+ADD src/alembic ./alembic
+ADD src/alembic.ini ./alembic.ini
+
 CMD [ "python3", "main.py" ]
