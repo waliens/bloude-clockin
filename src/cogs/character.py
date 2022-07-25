@@ -1,10 +1,13 @@
 
 import logging
+import os
 import discord
 from discord import InvalidArgument, Option, SlashCommandOptionType, guild_only, slash_command
 from discord.ext import commands
+from sqlalchemy import select
 
 from db_util.character import add_character, update_character, delete_character
+from models import Character
 
 
 class CharacterCog(commands.Cog):
@@ -67,6 +70,37 @@ class CharacterCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(f"Cannot delete a character: {str(e)}")
 
+  @slash_command()
+  @guild_only()
+  async def characters(self, ctx, for_user: discord.Member = None):
+    """List all characters in an embed
+    """
+    try:
+      guild_id = str(ctx.guild_id)
+      user_id = self._get_applied_user_id(ctx, for_user, str(ctx.author.id))
+    
+      async with self.bot.db_session() as sess:
+        async with sess.begin():
+          characters = (await sess.execute(select(Character).where(
+            Character.id_user == user_id,
+            Character.id_guild == guild_id
+          ))).scalars().all()
+
+          if len(characters) > 0:
+            description = os.linesep.join(["- " + ("**" if c.is_main else "") + "{}".format(c.name) + ("** (main)" if c.is_main else "") for c in characters])
+          else:
+            description = "No character registered."
+
+          embed = discord.Embed(
+            title="List of characters",
+            description=description
+          )
+
+          await ctx.respond(embed=embed)
+
+    except InvalidArgument as e:
+      await ctx.respond(f"Cannot list characters: {str(e)}")
+
   def _get_applied_user_id(self, ctx, for_user, user_id):
     """return the id to which the query should be applied"""
     if for_user is None:
@@ -82,8 +116,6 @@ class CharacterCog(commands.Cog):
     logging.getLogger().error(str(error))
     raise error
 
-
-  
 
 def setup(bot):
   bot.add_cog(CharacterCog(bot))
