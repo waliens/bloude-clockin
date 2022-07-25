@@ -1,10 +1,9 @@
-import datetime
-import pprint
+
 import discord
-from sqlalchemy import and_, select, update
+from discord import Option, SlashCommandOptionType, guild_only
 from discord.ext import commands
 
-from models import Character
+from db_util import add_character
 
 
 class CharacterCog(commands.Cog):
@@ -14,7 +13,8 @@ class CharacterCog(commands.Cog):
   character_group = discord.SlashCommandGroup("character", "Character management")
 
   @character_group.command()
-  async def add(self, ctx, name: str, is_main: bool = False):
+  @guild_only()
+  async def add(self, ctx, name: str, is_main: bool = False, for_user: discord.Member = None):
     """
     name: str
       Character name (case sensitive)
@@ -22,29 +22,23 @@ class CharacterCog(commands.Cog):
       If this character is the main character for the player. First character will always be set as main whatever the value of the parameter. 
     """
     guild_id = str(ctx.guild_id)
-    user_id = str(ctx.user.id)
+    user_id = str(ctx.author.id)
+
+    if for_user is not None:
+      if user_id != for_user.id and not ctx.author.guild_permissions.administrator:
+        ctx.respond(f"Cannot add a character for another user than yourself.")
+        return
+      else:
+        user_id = str(for_user.id)
+    
     async with self.bot.db_session() as sess:
         async with sess.begin() as conn:
-          where_clause = [Character.id_guild == guild_id, Character.id_user == user_id]
-          query = select(Character).where(*where_clause)
-          user_characters = (await sess.execute(query)).mappings().all()
-          if len(user_characters) == 0 or len([c for c in user_characters if c['Character'].name == name]) == 0:
-            new_character = Character(
-              name=name, 
-              id_guild=guild_id, 
-              id_user=user_id, 
-              is_main=len(user_characters) == 0 or is_main, 
-              created_at=datetime.datetime.now()
-            )
-
-            if is_main:
-              await sess.execute(update(Character).where(*where_clause).values(is_main=False))
-            sess.add(new_character)
-            await sess.commit()
-            await ctx.respond(f"The new character '{name}' was added (main: {len(user_characters) == 0 or is_main}).")
+          created, character = await add_character(sess, user_id, guild_id, name, is_main=is_main)
+          if created:
+            await ctx.respond(f"The new character '{name}' was added (main: {character.is_main}).")
           else:
             await ctx.respond(f"Cannot add a character. The character '{name}' already exists.")
-            
+  
 
 def setup(bot):
   bot.add_cog(CharacterCog(bot))

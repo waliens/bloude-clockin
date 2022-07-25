@@ -27,14 +27,15 @@ class BloudeClockInBot(commands.Bot):
   
   async def on_ready(self):
     logging.getLogger().info("Bot `{}` is ready.".format(self.bot_classname))
-    
+
   async def on_connect(self):
     self._db_session, self._db_engine = await init_db()
     logging.getLogger().info("Bot `{}` successfully connected to the database.".format(self.bot_classname))
     logging.getLogger().info("Bot `{}` is connected.".format(self.bot_classname))
 
   async def on_disconnect(self):
-    self._db_engine.dispose()
+    if self._db_engine is not None:
+      await self._db_engine.dispose()
     self._db_engine = None
     self._db_session = None
     logging.getLogger().info("Bot `{}` disconnected from the database.".format(self.bot_classname))
