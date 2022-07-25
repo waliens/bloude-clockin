@@ -3,7 +3,7 @@ from discord.ext import commands
 
 
 class Hello(commands.Cog): 
-  def __init__(self, bot): # this is a special method that is called when the cog is loaded
+  def __init__(self, bot): 
     self.bot = bot
 
   @discord.slash_command()
