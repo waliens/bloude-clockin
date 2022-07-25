@@ -1,5 +1,4 @@
 import logging
-from discord import slash_command, user_command
 from discord.ext import commands
 from database import init_db
 
@@ -13,6 +12,14 @@ class BloudeClockInBot(commands.Bot):
 
     self._db_session = None
     self._db_engine = None
+
+  @property
+  def db_session(self):
+    return self._db_session
+
+  @property
+  def db_engine(self):
+    return self._db_engine
   
   async def on_ready(self):
     self._db_session, self._db_engine = await init_db()
