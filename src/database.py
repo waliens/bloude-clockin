@@ -39,7 +39,7 @@ def run_alambic_stamp_head(conn, cfg):
 
 async def init_db():
     # load config before for setting up loggin
-    alembic_cfg = Config("/bot/alembic.ini")
+    alembic_cfg = Config("./alembic.ini")
 
     from models import Base
     database_path = get_db_url()
