@@ -32,21 +32,32 @@ class BloudeClockInBot(commands.Bot):
     logging.getLogger().info("Bot `{}` is ready.".format(self.bot_classname))
 
   async def on_connect(self):
-    self._db_session, self._db_engine = await init_db()
-    
-    logging.getLogger().setLevel(os.getenv("LOG_LEVEL", default="INFO"))
-    logging.getLogger().info("Bot `{}` successfully connected to the database.".format(self.bot_classname))
+    await self._connect_db()
     logging.getLogger().info("Bot `{}` is connected.".format(self.bot_classname))
 
   async def on_disconnect(self):
+    await self._disconnect_db()
+    logging.getLogger().info("Bot `{}` is disconnected.".format(self.bot_classname))
+
+  async def on_resume(self):
+    await self._connect_db()
+    logging.getLogger().info("Bot `{}` resumed.".format(self.bot_classname))
+
+  async def _disconnect_db(self):
+    await self._do_disconnect_db()
+    logging.getLogger().info("Bot `{}` disconnected from the database.".format(self.bot_classname))
+
+  async def _do_disconnect_db(self):
     if self._db_engine is not None:
       await self._db_engine.dispose()
 
     self._db_engine = None
     self._db_session = None
 
-    logging.getLogger().info("Bot `{}` disconnected from the database.".format(self.bot_classname))
-    logging.getLogger().info("Bot `{}` is disconnected.".format(self.bot_classname))
+  async def _connect_db(self):
+    await self._do_disconnect_db()
+    self._db_session, self._db_engine = await init_db()
+    logging.getLogger().info("Bot `{}` successfully connected to the database.".format(self.bot_classname))
 
   @property
   def bot_classname(self):
