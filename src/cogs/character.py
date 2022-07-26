@@ -106,7 +106,7 @@ class CharacterCog(commands.Cog):
     if for_user is None:
       return user_id
 
-    if user_id != for_user.id and not ctx.author.guild_permissions.administrator:
+    if user_id != str(for_user.id) and not ctx.author.guild_permissions.administrator:
       raise InvalidArgument("you do not have the permissions to execute this command on behalf of another user")
 
     return str(for_user.id)

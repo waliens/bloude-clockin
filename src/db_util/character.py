@@ -1,15 +1,15 @@
 import datetime
 from discord import InvalidArgument
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from models import Character
 
 
 def has_character_by_name(models, name):
-  return len([c for c in models if c.name == name]) > 0
+  return len([c for c in models if c.name.lower() == name.lower()]) > 0
 
 
 def get_character_by_name(models, name):
-  return [c for c in models if c.name == name][0]
+  return [c for c in models if c.name.lower() == name.lower()][0]
 
 
 async def add_character(session, id_user: str, id_guild: str, name: str, is_main: bool=False):
@@ -82,24 +82,21 @@ async def update_character(session, id_user: str, id_guild: str, name: str, new_
   
   if len(user_characters) == 0 or not has_character_by_name(user_characters, name):
     raise InvalidArgument(f"unknown character '{name}'.")
-  
-  update_data = {}
-
-  if new_name is not None:
-    if has_character_by_name(user_characters, new_name):
-      raise InvalidArgument(f"such a character '{new_name}' already exists.")
-    update_data['name'] = new_name
-  
-  if is_main is not None:
-    if not is_main:
-      raise InvalidArgument("to change your main character, select the new main rather than unselect the old one.")
-    update_data['is_main'] = True
 
   current_character = get_character_by_name(user_characters, name)
 
   if not current_character.is_main and is_main:
     await session.execute(update(Character).where(*where_clause).values(is_main=False))
-  await session.execute(update(Character).where(*where_clause, Character.name == name).values(**update_data))
+
+  if new_name is not None:
+    if has_character_by_name(user_characters, new_name):
+      raise InvalidArgument(f"such a character '{new_name}' already exists.")
+    current_character.name = new_name
+  
+  if is_main is not None:
+    if not is_main:
+      raise InvalidArgument("to change your main character, select the new main rather than unselect the old one.")
+    current_character.is_main = new_name = True
 
   await session.commit()
 
@@ -119,7 +116,7 @@ async def delete_character(session, id_user: str, id_guild: str, name: str):
   name: str
     Character name (to delete)
   """
-  where_clause = [Character.id_guild == id_guild, Character.id_user == id_user, Character.name == name]
+  where_clause = [Character.id_guild == id_guild, Character.id_user == id_user, func.lower(Character.name) == name.lower()]
   character = (await session.execute(select(Character).where(*where_clause))).scalars().first()
   if character is not None and character.is_main:
     raise InvalidArgument("cannot delete the main character")
