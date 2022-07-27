@@ -196,6 +196,11 @@ class RoleEnum(HumanReadableEnum):
     return base_name
 
 
+class RaidSizeEnum(HumanReadableEnum):
+  RAID10 = 1
+  RAID25 = 2
+
+
 def is_valid_class_role(chr_class: ClassEnum, role: RoleEnum):
   return (chr_class == ClassEnum.WARRIOR and role in {RoleEnum.TANK, RoleEnum.MELEE_DPS}) or \
     (chr_class == ClassEnum.PALADIN and role in {RoleEnum.TANK, RoleEnum.MELEE_DPS, RoleEnum.HEALER}) or \

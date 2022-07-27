@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 
-from db_util.wow_data import RoleEnum, ClassEnum
+from db_util.wow_data import RaidSizeEnum, RoleEnum, ClassEnum
 
 Base = declarative_base()
 
@@ -39,6 +39,7 @@ class Attendance(Base):
   id_raid = Column(Integer, ForeignKey('raid.id', ondelete="CASCADE"), primary_key=True)
   created_at = Column(DateTime)
   raid_date = Column(Date)
+  raid_size = Column(Enum(RaidSizeEnum))
   cancelled = Column(Boolean)  # if user cancelled his attendance post-registration (on a raid helper for instance)
   
   character = relationship("Character", lazy="joined")
