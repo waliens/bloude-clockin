@@ -44,8 +44,8 @@ class Attendance(Base):
 class Item(Base):
   __tablename__ = "item"
   id = Column(Integer, primary_key=True)
-  name_en = Column(String(255), unique=True)
-  name_fr = Column(String(255), unique=True)
+  name_en = Column(String(255))
+  name_fr = Column(String(255))
   metadata_ = Column("metadata", JSON)
 
 
