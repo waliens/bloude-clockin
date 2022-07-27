@@ -1,3 +1,4 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy import pool
 
@@ -64,7 +65,9 @@ def run_migrations_online():
     options["_coerce_config"] = True
     options.update(poolclass=pool.NullPool)
 
-    connectable = create_engine(get_db_url(), **options)
+    with_async = not os.getenv("NO_ASYNC", False)
+
+    connectable = create_engine(get_db_url(with_async=with_async), **options)
 
     with connectable.connect() as connection:
         context.configure(

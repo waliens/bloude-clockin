@@ -4,26 +4,24 @@ import os
 from dateutil.parser import isoparse
 import pytz
 
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.inspection import inspect
 from alembic.config import Config
 from alembic import command
 
-from models import Item, Raid
 
-
-def get_db_url():
+def get_db_url(with_async=True):
   username = os.getenv("POSTGRES_USER")
   password = os.getenv("POSTGRES_PASSWORD")
   host = os.getenv("POSTGRES_HOST")
   dbname = os.getenv("POSTGRES_DB")
-  return "postgresql+asyncpg://{}:{}@{}/{}".format(username, password, host, dbname)
+  driver = "asyncpg" if with_async else "psycopg2"
+  return "postgresql+{}://{}:{}@{}/{}".format(driver, username, password, host, dbname)
 
 
 async def add_raids(session):
+  from models import Raid
   with open("./data/raids.json", "r", encoding="utf-8") as file:
     raids = [Raid(**{
         k: (isoparse(v).astimezone(pytz.UTC).replace(tzinfo=None) if k == "reset_start" else v) for k, v in raid.items()
@@ -33,6 +31,7 @@ async def add_raids(session):
     
 
 async def add_items(session):
+  from models import Item
   with open("./data/items.json", "r", encoding="utf-8") as file:
     items = [Item(**item) for item in json.load(file)]
     logging.getLogger().info("Loading items into the database.")
