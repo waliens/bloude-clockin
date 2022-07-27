@@ -4,6 +4,7 @@ RUN pip install -U py-cord
 RUN pip install python-dotenv
 RUN pip install sqlalchemy[asyncio] sqlalchemy-utils
 RUN pip install alembic asyncpg
+RUN pip install python-dateutil pytz
 
 WORKDIR /bot
 
@@ -17,5 +18,6 @@ ADD src/models.py ./models.py
 ADD src/cogs ./cogs
 ADD src/alembic ./alembic
 ADD src/db_util ./db_util
+ADD src/data ./data
 
 CMD [ "python3", "main.py" ]
