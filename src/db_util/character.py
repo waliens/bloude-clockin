@@ -1,6 +1,7 @@
 import datetime
 from discord import InvalidArgument
 from sqlalchemy import delete, func, select, update
+from sqlalchemy.exc import NoResultFound
 from db_util.wow_data import ClassEnum, RoleEnum, is_valid_class_role
 from models import Character
 
@@ -145,3 +146,19 @@ async def delete_character(session, id_user: str, id_guild: str, name: str):
     raise InvalidArgument("cannot delete the main character")
   await session.execute(delete(Character).where(*where_clause))
   await session.commit()
+
+
+async def get_character(session, id_guild, id_user, name=None):
+  """Return the character based on the filter parameters. If name is omitted (None), 
+  the main character for this user and guild is returned.
+  """
+  try:
+    where_clause = [Character.id_guild == id_guild, Character.id_user == id_user]
+    if name is not None:
+      where_clause.append(Character.name.ilike(f"%{name}%"))
+    else:
+      where_clause.append(Character.is_main)
+    results = await session.execute(select(Character).where(*where_clause))
+    return results.scalars().one()
+  except NoResultFound as e:
+    raise InvalidArgument("character not found")
