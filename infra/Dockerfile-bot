@@ -3,7 +3,7 @@ FROM python:3.10.5-alpine3.16
 RUN pip install -U py-cord
 RUN pip install python-dotenv
 RUN pip install sqlalchemy[asyncio] sqlalchemy-utils
-RUN pip install alembic asyncpg
+RUN pip install alembic asyncpg psycopg2-binary
 RUN pip install python-dateutil pytz
 
 WORKDIR /bot
