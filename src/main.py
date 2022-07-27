@@ -8,12 +8,11 @@ from bci import BloudeClockInBot
 
 if __name__ == "__main__":
   dotenv.load_dotenv()
-  # logging.config.fileConfig('./logging.conf')
+  logging.config.fileConfig('./logging.conf')
   
-  # level = os.getenv("LOG_LEVEL", "").upper()
-  # if level in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
-  #   for name in logging.root.manager.loggerDict:
-  #     logging.getLogger(name).setLevel(level)
+  level = os.getenv("LOG_LEVEL", "").upper()
+  if level in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+    logging.getLogger().setLevel(level)  # only override default logger 
   
   # bot
   bot = BloudeClockInBot()
