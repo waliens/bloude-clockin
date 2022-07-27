@@ -2,21 +2,23 @@
 
 ## Lister ses personnages
 Permet de renseigner sa liste de personnages et son main, à faire une fois par personnage pour lequel c'est pertinent. 
-Par défaut `@user` réfère à utilisateur courant (si pas indiqué à l'appel de la commande). 
+Par défaut `@for_user` réfère à utilisateur courant (si pas indiqué à l'appel de la commande). 
 **ADMIN** Seuls les admins peuvent lancer la commande pour d'autres users qu'eux.
 ```
-/character add [@user] (menu sequence: character? > class? > role?)
-/character delete [@user] (menu sequence: character?) 
-/character update [@user] (menu sequence: character? > newname?)
-/character main [@user] (menu sequence: character) 
-/characters [@user] (list all characters)
+/character add name role class [@for_user] [is_main]
+/character delete name [@for_user] 
+/character update name [@for_user] [role] [class] [is_main] [new_name] 
+/characters [@for_user]
 ```
 
 ## Jetons de présence
-À chaque sortie raid "hors-guilde", chaque joueur doit indiquer sa sortie: avec quel personnage (s'il en a renseigné plusieurs, voir ci dessus) et dans quel raid
+À chaque sortie raid "hors-guilde", chaque joueur doit indiquer sa sortie: avec quel personnage (s'il en a renseigné plusieurs, voir ci dessus) et dans quel raid.
+Par défaut, le main de l'utilisateur actuel à l'heure indiquée:
 ```
-/token (menu sequence: character (default: main)? > raid?)
+/presence [character] [when] [@for_user]
 ```
+
+Cette requête ouvre un formulaire pour sélectionner le raid.
 
 **ADMIN** Générer automatiquement des jetons de présence depuis les raid-helpers. En cas d'absence d'un joueur, mettre à jour le raid helper (déplacer le(s) absent(s) vers le rôle d'absence approprié et ajouter le(s) remplaçant(s) en inscrit(s)), ensuite relancer la commande ci dessous qui fera la différence entre les deux versions de l'event. Les joueurs passés d'inscrits à non-inscrits seront marqués comme 'absent dernière minute':
 ```
