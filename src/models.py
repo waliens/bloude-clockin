@@ -1,7 +1,9 @@
-from sqlalchemy import Column, JSON, Boolean, Integer, Date, DateTime, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, JSON, Boolean, Enum, Integer, Date, DateTime, String, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
+
+from db_util.wow_data import RoleEnum, ClassEnum
 
 Base = declarative_base()
 
@@ -13,6 +15,8 @@ class Character(Base):
   id_user = Column(String(22))
   name = Column(String(255))
   is_main = Column(Boolean)
+  role = Column(Enum(RoleEnum))
+  character_class = Column(Enum(ClassEnum))
   created_at = Column(DateTime)
 
   __table_args__ = (
