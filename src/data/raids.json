@@ -1,11 +1,11 @@
 [
- {"id": 3456, "name_en": "Naxxramas", "name_fr": "Naxxramas", "reset_period": 7, "reset_start": "2022-09-26T23:59:59+0200"},
- {"id": 4812, "name_en": "Icecrown Citadel", "name_fr": "Citadelle de la Couronne de glace", "reset_period": 7, "reset_start": "2022-09-26T23:59:59+0200"},
- {"id": 2159, "name_en": "Onyxia's Lair", "name_fr": "Repaire d’Onyxia", "reset_period": 7, "reset_start": "2022-09-26T23:59:59+0200"},
- {"id": 4273, "name_en": "Ulduar", "name_fr": "Ulduar", "reset_period": 7, "reset_start": "2022-09-26T23:59:59+0200"},
- {"id": 4493, "name_en": "The Obsidian Sanctum", "name_fr": "Le sanctum Obsidien", "reset_period": 7, "reset_start": "2022-09-26T23:59:59+0200"},
- {"id": 4500, "name_en": "The Eye of Eternity", "name_fr": "L’Œil de l’éternité", "reset_period": 7, "reset_start": "2022-09-26T23:59:59+0200"},
- {"id": 4722, "name_en": "Crusaders' Coliseum: Trial of the Crusader", "name_fr": "L’épreuve du croisé", "reset_period": 7, "reset_start": "2022-09-26T23:59:59+0200"},
- {"id": 4603, "name_en": "Vault of Archavon", "name_fr": "Caveau d’Archavon", "reset_period": 7, "reset_start": "2022-09-26T23:59:59+0200"},
- {"id": 4987, "name_en": "The Ruby Sanctum", "name_fr": "Le sanctum Rubis", "reset_period": 7, "reset_start": "2022-09-26T23:59:59+0200"}
+ {"id": 3456, "name_en": "Naxxramas", "name_fr": "Naxxramas", "reset_period": 7, "reset_start": "2022-09-26T08:59:59+0200"},
+ {"id": 4812, "name_en": "Icecrown Citadel", "name_fr": "Citadelle de la Couronne de glace", "reset_period": 7, "reset_start": "2022-09-26T08:59:59+0200"},
+ {"id": 2159, "name_en": "Onyxia's Lair", "name_fr": "Repaire d’Onyxia", "reset_period": 7, "reset_start": "2022-09-26T08:59:59+0200"},
+ {"id": 4273, "name_en": "Ulduar", "name_fr": "Ulduar", "reset_period": 7, "reset_start": "2022-09-26T08:59:59+0200"},
+ {"id": 4493, "name_en": "The Obsidian Sanctum", "name_fr": "Le sanctum Obsidien", "reset_period": 7, "reset_start": "2022-09-26T08:59:59+0200"},
+ {"id": 4500, "name_en": "The Eye of Eternity", "name_fr": "L’Œil de l’éternité", "reset_period": 7, "reset_start": "2022-09-26T08:59:59+0200"},
+ {"id": 4722, "name_en": "Crusaders' Coliseum: Trial of the Crusader", "name_fr": "L’épreuve du croisé", "reset_period": 7, "reset_start": "2022-09-26T08:59:59+0200"},
+ {"id": 4603, "name_en": "Vault of Archavon", "name_fr": "Caveau d’Archavon", "reset_period": 7, "reset_start": "2022-09-26T08:59:59+0200"},
+ {"id": 4987, "name_en": "The Ruby Sanctum", "name_fr": "Le sanctum Rubis", "reset_period": 7, "reset_start": "2022-09-26T08:59:59+0200"}
 ]
