@@ -98,7 +98,7 @@ class CharacterCog(commands.Cog):
           characters = (await sess.execute(select(Character).where(
             Character.id_user == user_id,
             Character.id_guild == guild_id
-          ))).scalars().all()
+          ).order_by(Character.is_main.desc()))).scalars().all()
 
           if len(characters) > 0:
             formatted = list()
