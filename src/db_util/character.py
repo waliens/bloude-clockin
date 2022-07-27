@@ -1,6 +1,7 @@
 import datetime
 from discord import InvalidArgument
 from sqlalchemy import delete, func, select, update
+from db_util.wow_data import ClassEnum, RoleEnum, is_valid_class_role
 from models import Character
 
 
@@ -12,7 +13,7 @@ def get_character_by_name(models, name):
   return [c for c in models if c.name.lower() == name.lower()][0]
 
 
-async def add_character(session, id_user: str, id_guild: str, name: str, is_main: bool=False):
+async def add_character(session, id_user: str, id_guild: str, name: str, role: RoleEnum, character_class: ClassEnum, is_main: bool=False):
   """Adds a character, if not exists
   Parameters
   ----------
@@ -26,6 +27,10 @@ async def add_character(session, id_user: str, id_guild: str, name: str, is_main
     Character name
   is_main: bool
     Whether or not the character should be the main one
+  role: RoleEnum
+    The role of the character
+  character_class: ClassEnum
+    The class of the character
 
   Returns
   -------
@@ -35,6 +40,9 @@ async def add_character(session, id_user: str, id_guild: str, name: str, is_main
   where_clause = [Character.id_guild == id_guild, Character.id_user == id_user]
   query = select(Character).where(*where_clause)
   user_characters = (await session.execute(query)).scalars().all()
+
+  if not is_valid_class_role(character_class, role):
+    raise InvalidArgument(f'invalid class/role combination')
   
   if len(user_characters) > 0 and has_character_by_name(user_characters, name):
     raise InvalidArgument(f"such a character '{name}' already exists.")
@@ -44,7 +52,9 @@ async def add_character(session, id_user: str, id_guild: str, name: str, is_main
     id_guild=id_guild, 
     id_user=id_user, 
     is_main=len(user_characters) == 0 or is_main, 
-    created_at=datetime.datetime.now()
+    created_at=datetime.datetime.now(),
+    role=role,
+    character_class=character_class
   )
 
   if is_main:
@@ -54,7 +64,7 @@ async def add_character(session, id_user: str, id_guild: str, name: str, is_main
   return new_character
   
 
-async def update_character(session, id_user: str, id_guild: str, name: str, new_name: str = None, is_main: bool = False):
+async def update_character(session, id_user: str, id_guild: str, name: str, new_name: str = None, is_main: bool = False, role: RoleEnum=None, character_class: ClassEnum=None):
   """Updates a character
   Parameters
   ----------
@@ -70,6 +80,10 @@ async def update_character(session, id_user: str, id_guild: str, name: str, new_
     New name for the character
   is_main: bool (optional)
     New main status
+  role: RoleEnum (optional)
+    The role of the character
+  character_class: ClassEnum (optional)
+    The class of the character
 
   Returns
   -------
@@ -97,6 +111,15 @@ async def update_character(session, id_user: str, id_guild: str, name: str, new_
     if not is_main:
       raise InvalidArgument("to change your main character, select the new main rather than unselect the old one.")
     current_character.is_main = new_name = True
+
+  if role is not None:
+    current_character.role = role
+
+  if character_class is not None:
+    current_character.character_class = character_class
+
+  if not is_valid_class_role(current_character.character_class, current_character.role):
+    raise InvalidArgument(f'invalid class/role combination')
 
   await session.commit()
 

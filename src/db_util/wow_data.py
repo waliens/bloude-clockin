@@ -2,6 +2,8 @@ from email.mime import base
 import re
 from enum import Enum
 
+from discord import Role
+
 
 def enum_names(enum_type):
   return [v.name for v in enum_type]
@@ -192,3 +194,16 @@ class RoleEnum(HumanReadableEnum):
     else: 
       base_name = super().name_hr
     return base_name
+
+
+def is_valid_class_role(chr_class: ClassEnum, role: RoleEnum):
+  return (chr_class == ClassEnum.WARRIOR and role in {RoleEnum.TANK, RoleEnum.MELEE_DPS}) or \
+    (chr_class == ClassEnum.PALADIN and role in {RoleEnum.TANK, RoleEnum.MELEE_DPS, RoleEnum.HEALER}) or \
+    (chr_class == ClassEnum.HUNTER and role in {RoleEnum.RANGED_DPS}) or \
+    (chr_class == ClassEnum.ROGUE and role in {RoleEnum.MELEE_DPS}) or \
+    (chr_class == ClassEnum.PRIEST and role in {RoleEnum.RANGED_DPS, RoleEnum.HEALER}) or \
+    (chr_class == ClassEnum.DEATH_KNIGHT and role in {RoleEnum.TANK, RoleEnum.MELEE_DPS}) or \
+    (chr_class == ClassEnum.SHAMAN and role in {RoleEnum.MELEE_DPS, RoleEnum.RANGED_DPS, RoleEnum.HEALER}) or \
+    (chr_class == ClassEnum.MAGE and role in {RoleEnum.RANGED_DPS}) or \
+    (chr_class == ClassEnum.WARLOCK and role in {RoleEnum.RANGED_DPS}) or \
+    (chr_class == ClassEnum.DRUID)
