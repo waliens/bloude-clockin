@@ -6,6 +6,7 @@ from discord import InvalidArgument, Option, guild_only, slash_command
 from discord.ext import commands
 from sqlalchemy import select
 
+from .util import get_applied_user_id
 from db_util.character import add_character, update_character, delete_character
 from db_util.wow_data import ClassEnum, RoleEnum
 from models import Character
@@ -30,7 +31,7 @@ class CharacterCog(commands.Cog):
     """
     try:
       guild_id = str(ctx.guild_id)
-      user_id = self._get_applied_user_id(ctx, for_user, str(ctx.author.id))
+      user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       
       async with self.bot.db_session() as sess:
         async with sess.begin():
@@ -57,7 +58,7 @@ class CharacterCog(commands.Cog):
         raise InvalidArgument("nothing to do, change either the name or the main status at least")
 
       guild_id = str(ctx.guild_id)
-      user_id = self._get_applied_user_id(ctx, for_user, str(ctx.author.id))
+      user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       
       async with self.bot.db_session() as sess:
         async with sess.begin():
@@ -74,7 +75,7 @@ class CharacterCog(commands.Cog):
     """
     try:
       guild_id = str(ctx.guild_id)
-      user_id = self._get_applied_user_id(ctx, for_user, str(ctx.author.id))
+      user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       
       async with self.bot.db_session() as sess:
         async with sess.begin():
@@ -91,7 +92,7 @@ class CharacterCog(commands.Cog):
     """
     try:
       guild_id = str(ctx.guild_id)
-      user_id = self._get_applied_user_id(ctx, for_user, str(ctx.author.id))
+      user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
     
       async with self.bot.db_session() as sess:
         async with sess.begin():
@@ -126,16 +127,6 @@ class CharacterCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(f"Cannot list characters: {str(e)}", ephemeral=True)
 
-  def _get_applied_user_id(self, ctx, for_user, user_id):
-    """return the id to which the query should be applied"""
-    if for_user is None:
-      return user_id
-
-    if user_id != str(for_user.id) and not ctx.author.guild_permissions.administrator:
-      raise InvalidArgument("you do not have the permissions to execute this command on behalf of another user")
-
-    return str(for_user.id)
-  
   @commands.Cog.listener()
   async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
     logging.getLogger().error(str(error))
