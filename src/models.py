@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import Column, JSON, Boolean, Enum, Integer, Date, DateTime, String, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -32,6 +33,14 @@ class Raid(Base):
   reset_period = Column(Integer)  # in days
   reset_start = Column(DateTime)  # date of the first reset (of the expansion)
 
+  @property
+  def name(self):
+    return self.name_en
+
+  @property
+  def first_reset_end(self):
+    return self._reset_start + datetime.timedelta(days=self.reset_period)
+
 
 class Attendance(Base):
   __tablename__ = "attendance"
@@ -39,7 +48,7 @@ class Attendance(Base):
   id_raid = Column(Integer, ForeignKey('raid.id', ondelete="CASCADE"), primary_key=True)
   created_at = Column(DateTime)
   raid_date = Column(Date)
-  raid_size = Column(Enum(RaidSizeEnum))
+  raid_size = Column(Enum(RaidSizeEnum), primary_key=True)
   cancelled = Column(Boolean)  # if user cancelled his attendance post-registration (on a raid helper for instance)
   
   character = relationship("Character", lazy="joined")
@@ -52,6 +61,10 @@ class Item(Base):
   name_en = Column(String(255))
   name_fr = Column(String(255))
   metadata_ = Column("metadata", JSON)
+
+  @property
+  def name(self):
+    return self.name_en
 
 
 class Loot(Base):
