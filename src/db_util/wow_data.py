@@ -1,109 +1,194 @@
-ITEM_CLASS = {
-  0:"Consumable",
-  1:"Container",
-  2:"Weapon",
-  3:"Gem",
-  4:"Armor",
-  5:"Reagent",
-  6:"Projectile",
-  7:"Trade Goods",
-  8:"Generic(OBSOLETE)",
-  9:"Recipe",
-  10:"Money(OBSOLETE)",
-  11:"Quiver",
-  12:"Quest",
-  13:"Key",
-  14:"Permanent(OBSOLETE)",
-  15:"Miscellaneous",
-  16:"Glyph"
-}
+from email.mime import base
+import re
+from enum import Enum
 
-ITEM_QUALITY = {
-  0:("Grey","Poor"),
-  1:("White","Common"),
-  2:("Green","Uncommon"),
-  3:("Blue","Rare"),
-  4:("Purple","Epic"),
-  5:("Orange","Legendary"),
-  6:("Red","Artifact"),
-  7:("Gold","Bind to Account")
-}
 
-ITEM_INVENTORY_TYPE = {
-  0:"Non equipable",
-  1:"Head",
-  2:"Neck",
-  3:"Shoulder",
-  4:"Shirt",
-  5:"Chest",
-  6:"Waist",
-  7:"Legs",
-  8:"Feet",
-  9:"Wrists",
-  10:"Hands",
-  11:"Finger",
-  12:"Trinket",
-  13:"Weapon",
-  14:"Shield",
-  15:"Ranged (Bows)",
-  16:"Back",
-  17:"Two-Hand",
-  18:"Bag",
-  19:"Tabard",
-  20:"Robe",
-  21:"Main hand",
-  22:"Off hand",
-  23:"Holdable (Tome)",
-  24:"Ammo",
-  25:"Thrown",
-  26:"Ranged right (Wands, Guns)",
-  27:"Quiver",
-  28:"Relic"
-}
+def enum_names(enum_type):
+  return [v.name for v in enum_type]
 
-STATS_TYPE = {
-  0: "ITEM_MOD_MANA",
-  1: "ITEM_MOD_HEALTH",
-  3: "ITEM_MOD_AGILITY",
-  4: "ITEM_MOD_STRENGTH",
-  5: "ITEM_MOD_INTELLECT",
-  6: "ITEM_MOD_SPIRIT",
-  7: "ITEM_MOD_STAMINA",
-  12: "ITEM_MOD_DEFENSE_SKILL_RATING",
-  13: "ITEM_MOD_DODGE_RATING",
-  14: "ITEM_MOD_PARRY_RATING",
-  15: "ITEM_MOD_BLOCK_RATING",
-  16: "ITEM_MOD_HIT_MELEE_RATING",
-  17: "ITEM_MOD_HIT_RANGED_RATING",
-  18: "ITEM_MOD_HIT_SPELL_RATING",
-  19: "ITEM_MOD_CRIT_MELEE_RATING",
-  20: "ITEM_MOD_CRIT_RANGED_RATING",
-  21: "ITEM_MOD_CRIT_SPELL_RATING",
-  22: "ITEM_MOD_HIT_TAKEN_MELEE_RATING",
-  23: "ITEM_MOD_HIT_TAKEN_RANGED_RATING",
-  24: "ITEM_MOD_HIT_TAKEN_SPELL_RATING",
-  25: "ITEM_MOD_CRIT_TAKEN_MELEE_RATING",
-  26: "ITEM_MOD_CRIT_TAKEN_RANGED_RATING",
-  27: "ITEM_MOD_CRIT_TAKEN_SPELL_RATING",
-  28: "ITEM_MOD_HASTE_MELEE_RATING",
-  29: "ITEM_MOD_HASTE_RANGED_RATING",
-  30: "ITEM_MOD_HASTE_SPELL_RATING",
-  31: "ITEM_MOD_HIT_RATING",
-  32: "ITEM_MOD_CRIT_RATING",
-  33: "ITEM_MOD_HIT_TAKEN_RATING",
-  34: "ITEM_MOD_CRIT_TAKEN_RATING",
-  35: "ITEM_MOD_RESILIENCE_RATING",
-  36: "ITEM_MOD_HASTE_RATING",
-  37: "ITEM_MOD_EXPERTISE_RATING",
-  38: "ITEM_MOD_ATTACK_POWER",
-  39: "ITEM_MOD_RANGED_ATTACK_POWER",
-  40: "ITEM_MOD_FERAL_ATTACK_POWER",
-  41: "ITEM_MOD_SPELL_HEALING_DONE",
-  42: "ITEM_MOD_SPELL_DAMAGE_DONE",
-  43: "ITEM_MOD_MANA_REGENERATION",
-  44: "ITEM_MOD_ARMOR_PENETRATION_RATING",
-  45: "ITEM_MOD_SPELL_POWER",
-  46: "ITEM_MOD_HEALTH_REGEN",
-  47: "ITEM_MOD_SPELL_PENETRATION",
-  48: "ITEM_MOD_BLOCK_VALUE",
-}
+
+class HumanReadableEnum(Enum): # TODO i18n
+  @property
+  def name_hr(self):
+    return re.sub(r"[\s_]+", " ", self.name).lower().capitalize()
+
+
+
+class ItemClassEnum(HumanReadableEnum):
+  CONSUMABLE = 0
+  CONTAINER = 1
+  WEAPON = 2
+  GEM = 3
+  ARMOR = 4
+  REAGENT = 5
+  PROJECTILE = 6
+  TRADE_GOODS = 7
+  GENERIC = 8
+  RECIPE = 9
+  MONEY = 10
+  QUIVER = 11
+  QUEST = 12
+  KEY = 13
+  PERMANENT = 14
+  MISCELLANEOUS = 15
+  GLYPH = 16
+  
+  @property
+  def name_hr(self):
+    base_name = super().name_hr
+    if self == self.GENERIC or self == self.MONEY or self == self.PERMANENT:
+      base_name += " (OBSOLETE)"
+    return base_name
+
+
+
+class ItemQualityEnum(HumanReadableEnum):
+  POOR = 0
+  COMMON = 1
+  UNCOMMON = 2
+  RARE = 3
+  EPIC = 4
+  LEGENDARY = 5
+  ARTIFACT = 6
+  BIND_TO_ACCOUNT = 7
+
+  @property
+  def color(self):
+    if self == self.POOR:
+      return "Grey"
+    elif self == self.COMMON:
+      return "White"
+    elif self == self.UNCOMMON:
+      return "Green"
+    elif self == self.RARE:
+      return "Blue"
+    elif self == self.EPIC:
+      return "Purple"
+    elif self == self.LEGENDARY:
+      return "Orange"
+    elif self == self.ARTIFACT:
+      return "Red"
+    elif self == self.BIND_TO_ACCOUNT:
+      return "Gold"
+    else:
+      raise ValueError("unknown quality")
+
+
+class ItemInventoryEnum(HumanReadableEnum):
+  NON_EQUIPABLE = 0
+  HEAD = 1
+  NECK = 2
+  SHOULDER = 3
+  SHIRT = 4
+  CHEST = 5
+  WAIST = 6
+  LEGS = 7
+  FEET = 8
+  WRISTS = 9
+  HANDS = 10
+  FINGER = 11
+  TRINKET = 12
+  WEAPON = 13
+  SHIELD = 14
+  RANGED = 15  # 
+  BACK = 16
+  TWO_HAND = 17
+  BAG = 18
+  TABARD = 19
+  ROBE = 20
+  MAIN_HAND = 21
+  OFF_HAND = 22
+  HOLDABLE = 23  # 
+  AMMO = 24
+  THROWN = 25
+  RANGED_RIGHT = 26
+  QUIVER = 27
+  RELIC = 28
+
+  @property
+  def name_hr(self):
+    base_name = super().name_hr
+    if self == self.RANGED:
+      base_name += " (Bows)"
+    elif self == self.HOLDABLE:
+      base_name += " (Tome)"
+    elif self == self.RANGED_RIGHT:
+      base_name += " (Wands, Guns)"
+    return base_name
+
+
+class StatsEnum(HumanReadableEnum):
+  MANA = 0
+  HEALTH = 1
+  AGILITY = 3
+  STRENGTH = 4
+  INTELLECT = 5
+  SPIRIT = 6
+  STAMINA = 7
+  DEFENSE_SKILL_RATING = 12
+  DODGE_RATING = 13
+  PARRY_RATING = 14
+  BLOCK_RATING = 15
+  HIT_MELEE_RATING = 16
+  HIT_RANGED_RATING = 17
+  HIT_SPELL_RATING = 18
+  CRIT_MELEE_RATING = 19
+  CRIT_RANGED_RATING = 20
+  CRIT_SPELL_RATING = 21
+  HIT_TAKEN_MELEE_RATING = 22
+  HIT_TAKEN_RANGED_RATING = 23
+  HIT_TAKEN_SPELL_RATING = 24
+  CRIT_TAKEN_MELEE_RATING = 25
+  CRIT_TAKEN_RANGED_RATING = 26
+  CRIT_TAKEN_SPELL_RATING = 27
+  HASTE_MELEE_RATING = 28
+  HASTE_RANGED_RATING = 29
+  HASTE_SPELL_RATING = 30
+  HIT_RATING = 31
+  CRIT_RATING = 32
+  HIT_TAKEN_RATING = 33
+  CRIT_TAKEN_RATING = 34
+  RESILIENCE_RATING = 35
+  HASTE_RATING = 36
+  EXPERTISE_RATING = 37
+  ATTACK_POWER = 38
+  RANGED_ATTACK_POWER = 39
+  FERAL_ATTACK_POWER = 40
+  SPELL_HEALING_DONE = 41
+  SPELL_DAMAGE_DONE = 42
+  MANA_REGENERATION = 43
+  ARMOR_PENETRATION_RATING = 44
+  SPELL_POWER = 45
+  HEALTH_REGEN = 46
+  SPELL_PENETRATION = 47
+  BLOCK_VALUE = 48
+
+
+class ClassEnum(HumanReadableEnum):
+  WARRIOR = 1
+  PALADIN = 2
+  HUNTER = 3
+  ROGUE = 4
+  PRIEST = 5
+  DEATH_KNIGHT = 6
+  SHAMAN = 7
+  MAGE = 8
+  WARLOCK = 9
+  DRUID = 11
+
+
+class RoleEnum(HumanReadableEnum):
+  TANK = 1
+  HEALER = 2
+  MELEE_DPS = 3
+  RANGED_DPS = 4
+
+  @property
+  def name_hr(self):
+    if self == self.MELEE_DPS:
+      base_name = "Melee DPS"
+    elif self == self.RANGED_DPS:
+      base_name = "Ranged DPS"
+    else: 
+      base_name = super().name_hr
+    return base_name
