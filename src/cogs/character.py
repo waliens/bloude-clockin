@@ -2,7 +2,7 @@
 import logging
 import os
 import discord
-from discord import InvalidArgument, Option, SlashCommandOptionType, guild_only, slash_command
+from discord import InvalidArgument, Option, guild_only, slash_command
 from discord.ext import commands
 from sqlalchemy import select
 
@@ -101,7 +101,18 @@ class CharacterCog(commands.Cog):
           ))).scalars().all()
 
           if len(characters) > 0:
-            description = os.linesep.join(["- " + ("**" if c.is_main else "") + "{}".format(c.name) + ("** (main)" if c.is_main else "") for c in characters])
+            formatted = list()
+            for c in characters:
+              descriptor = ":" + {RoleEnum.HEALER: "ambulance", RoleEnum.MELEE_DPS: "crossed_swords", RoleEnum.RANGED_DPS: "bow_and_arrow", RoleEnum.TANK: "shield"}[c.role] + ":"
+              descriptor += " "
+              if c.is_main:
+                descriptor += "**"
+              descriptor +=  c.name
+              if c.is_main:
+                descriptor += "**"
+              descriptor += " ({})".format(c.character_class.name_hr)
+              formatted.append(descriptor)
+            description = os.linesep.join(formatted)
           else:
             description = "No character registered."
 
