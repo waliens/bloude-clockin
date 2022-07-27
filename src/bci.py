@@ -40,7 +40,7 @@ class BloudeClockInBot(commands.Bot):
     logging.getLogger().info("Bot `{}` is connected.".format(self.bot_classname))
 
   async def on_disconnect(self):
-    await self._disconnect_db()
+    # await self._disconnect_db()
     logging.getLogger().info("Bot `{}` is disconnected.".format(self.bot_classname))
 
   async def on_resume(self):
