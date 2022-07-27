@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from sqlalchemy import Column, JSON, Boolean, Enum, Integer, Date, DateTime, String, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -39,16 +39,17 @@ class Raid(Base):
 
   @property
   def first_reset_end(self):
-    return self._reset_start + datetime.timedelta(days=self.reset_period)
+    return self.reset_start + datetime.timedelta(days=self.reset_period)
 
 
 class Attendance(Base):
   __tablename__ = "attendance"
-  id_character = Column(Integer, ForeignKey('character.id', ondelete="CASCADE"), primary_key=True)
-  id_raid = Column(Integer, ForeignKey('raid.id', ondelete="CASCADE"), primary_key=True)
+  id = Column(Integer, primary_key=True)
+  id_character = Column(Integer, ForeignKey('character.id', ondelete="CASCADE"))
+  id_raid = Column(Integer, ForeignKey('raid.id', ondelete="CASCADE"))
   created_at = Column(DateTime)
-  raid_date = Column(Date)
-  raid_size = Column(Enum(RaidSizeEnum), primary_key=True)
+  raid_datetime = Column(DateTime)
+  raid_size = Column(Enum(RaidSizeEnum))
   cancelled = Column(Boolean)  # if user cancelled his attendance post-registration (on a raid helper for instance)
   
   character = relationship("Character", lazy="joined")
