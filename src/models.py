@@ -30,6 +30,7 @@ class Raid(Base):
   id = Column(Integer, primary_key=True)
   name_en = Column(String(255), unique=True)
   name_fr = Column(String(255), unique=True)
+  short_name = Column(String(255), unique=True)
   reset_period = Column(Integer)  # in days
   reset_start = Column(DateTime)  # date of the first reset (of the expansion)
 
