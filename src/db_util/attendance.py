@@ -113,10 +113,10 @@ async def fetch_attendances(session, id_character: int, date_from: datetime.date
 
     valid_attendances.append(attendance)
 
-  actual_datetime_from = min([_from for _from, _ in resets_from_to_cache.values()])
-  actual_datetime_to = max([_to for _, _to in resets_from_to_cache.values()])
+  if len(resets_from_to_cache) > 0:
+    actual_datetime_from = min([_from for _from, _ in resets_from_to_cache.values()])
+    actual_datetime_to = max([_to for _, _to in resets_from_to_cache.values()])
+  else:
+    actual_datetime_from, actual_datetime_to = datetime_from, datetime_to
 
   return valid_attendances, (actual_datetime_from, actual_datetime_to)
-    
-
-    
