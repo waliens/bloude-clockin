@@ -10,7 +10,8 @@ class BloudeClockInBot(commands.Bot):
     cog_exts = [
       "hello", 
       "character",
-      "attendance"
+      "attendance",
+      "loot"
     ]
 
     for cog_ext in cog_exts:
