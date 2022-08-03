@@ -76,6 +76,29 @@ class ItemQualityEnum(HumanReadableEnum):
       raise ValueError("unknown quality")
 
 
+class InventorySlotEnum():
+  AMMO = 0	
+  HEAD = 1	
+  NECK = 2	
+  SHOULDER = 3	
+  BODY = 4	
+  CHEST = 5	
+  WAIST = 6	
+  LEGS = 7	
+  FEET = 8	
+  WRIST = 9	
+  HAND = 10	
+  FINGER1 = 11	
+  FINGER2 = 12	
+  TRINKET1 = 13	
+  TRINKET2 = 14	
+  BACK = 15	
+  MAINHAND = 16	
+  OFFHAND = 17	
+  RANGED = 18	
+  TABARD = 19	
+  
+
 class ItemInventoryEnum(HumanReadableEnum):
   NON_EQUIPABLE = 0
   HEAD = 1
@@ -92,7 +115,7 @@ class ItemInventoryEnum(HumanReadableEnum):
   TRINKET = 12
   WEAPON = 13
   SHIELD = 14
-  RANGED = 15  # 
+  RANGED = 15
   BACK = 16
   TWO_HAND = 17
   BAG = 18
@@ -100,7 +123,7 @@ class ItemInventoryEnum(HumanReadableEnum):
   ROBE = 20
   MAIN_HAND = 21
   OFF_HAND = 22
-  HOLDABLE = 23  # 
+  HOLDABLE = 23
   AMMO = 24
   THROWN = 25
   RANGED_RIGHT = 26
@@ -117,6 +140,65 @@ class ItemInventoryEnum(HumanReadableEnum):
     elif self == self.RANGED_RIGHT:
       base_name += " (Wands, Guns)"
     return base_name
+
+  def get_slot(self):
+    if self == self.HEAD:
+      return InventorySlotEnum.HEAD
+    elif self == self.NECK:
+      return InventorySlotEnum.NECK
+    elif self == self.SHOULDER:
+      return InventorySlotEnum.SHOULDER
+    elif self == self.SHIRT:
+      return InventorySlotEnum.BODY
+    elif self == self.CHEST:
+      return InventorySlotEnum.CHEST
+    elif self == self.WAIST:
+      return InventorySlotEnum.WAIST
+    elif self == self.LEGS:
+      return InventorySlotEnum.LEGS
+    elif self == self.FEET:
+      return InventorySlotEnum.FEET
+    elif self == self.WRISTS:
+      return InventorySlotEnum.WRIST
+    elif self == self.HANDS:
+      return InventorySlotEnum.HAND
+    elif self == self.FINGER:
+      return InventorySlotEnum.FINGER1
+    elif self == self.TRINKET:
+      return InventorySlotEnum.TRINKET1
+    elif self == self.WEAPON:
+      return InventorySlotEnum.MAINHAND
+    elif self == self.SHIELD:
+      return InventorySlotEnum.OFFHAND
+    elif self == self.RANGED:
+      return InventorySlotEnum.RANGED
+    elif self == self.BACK:
+      return InventorySlotEnum.BACK
+    elif self == self.TWO_HAND:
+      return InventorySlotEnum.MAINHAND
+    elif self == self.BAG:
+      return None
+    elif self == self.TABARD:
+      return InventorySlotEnum.BODY
+    elif self == self.ROBE:
+      return InventorySlotEnum.BODY
+    elif self == self.MAIN_HAND:
+      return InventorySlotEnum.MAINHAND
+    elif self == self.OFF_HAND:
+      return InventorySlotEnum.OFFHAND
+    elif self == self.HOLDABLE:
+      return InventorySlotEnum.MAINHAND
+    elif self == self.AMMO:
+      return InventorySlotEnum.AMMO
+    elif self == self.THROWN:
+      return InventorySlotEnum.AMMO
+    elif self == self.RANGED_RIGHT:
+      return InventorySlotEnum.RANGED
+    elif self == self.QUIVER:
+      return None
+    elif self == self.RELIC:
+      return InventorySlotEnum.RANGED
+    return None
 
 
 class StatsEnum(HumanReadableEnum):
