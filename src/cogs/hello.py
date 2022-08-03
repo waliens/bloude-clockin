@@ -6,7 +6,7 @@ class Hello(commands.Cog):
   def __init__(self, bot): 
     self.bot = bot
 
-  @discord.slash_command()
+  @discord.slash_command(description="Surprise")
   async def bb(self, ctx):
     await ctx.respond('Bloudiens, bloudiennes!')
 

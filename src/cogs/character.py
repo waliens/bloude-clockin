@@ -18,7 +18,7 @@ class CharacterCog(commands.Cog):
 
   character_group = discord.SlashCommandGroup("character", "Character management")
 
-  @character_group.command()
+  @character_group.command(description="Create a character")
   @guild_only()
   async def add(self, ctx, 
     name: str, 
@@ -41,7 +41,7 @@ class CharacterCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(f"Cannot add a character: {str(e)}", ephemeral=True)
 
-  @character_group.command()
+  @character_group.command(description="Update a character")
   @guild_only()
   async def update(self, ctx, 
     name: str, 
@@ -68,7 +68,7 @@ class CharacterCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(f"Cannot update a character: {str(e)}", ephemeral=True)
 
-  @character_group.command()
+  @character_group.command(description="Delete a character")
   @guild_only()
   async def delete(self, ctx, name: str, for_user: discord.Member = None):
     """Delete a character
@@ -85,7 +85,7 @@ class CharacterCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(f"Cannot delete a character: {str(e)}", ephemeral=True)
 
-  @slash_command()
+  @discord.slash_command(description="List of characters")
   @guild_only()
   async def characters(self, ctx, for_user: discord.Member = None):
     """List all characters in an embed

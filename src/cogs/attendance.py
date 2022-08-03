@@ -23,7 +23,7 @@ class AttendanceCog(commands.Cog):
   def __init__(self, bot) -> None:
     self.bot = bot
 
-  @presence_group.command()
+  @presence_group.command(description="Indicate you have attended a raid")
   @guild_only()
   async def add(self, ctx,
     char_name: Option(str, name="character") = None, 
@@ -46,7 +46,7 @@ class AttendanceCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(f"Cannot submit a presence: {str(e)}", ephemeral=True)
 
-  @presence_group.command()
+  @presence_group.command(description="List the raids attended by a character")
   @guild_only()
   async def report(self, ctx,
     char_name: Option(str, name="character", description="Character name") = None,
