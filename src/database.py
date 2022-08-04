@@ -38,6 +38,16 @@ async def add_items(session):
     session.add_all(items)
 
 
+async def add_charters(session):
+  from models import GuildCharter, GuildCharterField
+  with open("./data/charters.json", "r", encoding="utf-8") as file:
+    for guild in json.load(file):
+        charter = GuildCharter(**{k:v for k, v in guild.items() if k != "fields"})
+        charter_fields = [GuildCharterField(id_guild=guild["id_guild"], **field) for field in guild["fields"]]
+        session.add(charter)
+        session.add_all(charter_fields) 
+
+
 def check_for_table(conn, tablename):
     return inspect(conn).has_table(tablename)
 
@@ -68,7 +78,7 @@ async def init_db():
             await conn.run_sync(run_alambic_stamp_head, alembic_cfg)
             await conn.commit()
             
-            add_functions = [add_raids, add_items]
+            add_functions = [add_raids, add_items, add_charters]
             async with db_session() as sess:
                 async with sess.begin():
                     for add_fn in add_functions:

@@ -77,3 +77,23 @@ class Loot(Base):
 
   character = relationship("Character", lazy="joined")
   item = relationship("Item", lazy="joined")
+
+
+class GuildCharter(Base):
+  __tablename__ = "guild_charter"
+
+  id_guild = Column(String(22), primary_key=True)
+  title = Column(String(256), nullable=False)
+  id_sign_channel = Column(String(22), nullable=True)
+  id_sign_message = Column(String(22), nullable=True)
+  id_sign_emoji = Column(String, nullable=True)
+  id_sign_role = Column(String, nullable=True)
+
+
+class GuildCharterField(Base):
+  __tablename__ = "guild_charter_field"
+  
+  id_guild = Column(String(22), primary_key=True)
+  field_number = Column(Integer, primary_key=True)
+  title = Column(String(256))
+  content = Column(String(1000))
