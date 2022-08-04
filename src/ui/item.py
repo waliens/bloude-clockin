@@ -1,8 +1,9 @@
 import logging
-from discord import Embed, Interaction, InvalidArgument
+from discord import ButtonStyle, Embed, Interaction, InvalidArgument
 from discord.ui import View, Button
 
 from db_util.item import register_loot
+from ui.util import CancelButton
 
 class ItemListEmbed(Embed):
   def __init__(self, items, *args, max_items=-1, **kwargs):
@@ -21,7 +22,7 @@ class ItemListEmbed(Embed):
 
 class LootSelectionButton(Button):
   def __init__(self, bot, item_nb, item_id, character_id, *args, **kwargs):
-    super().__init__(*args, label=f"{item_nb}", **kwargs)
+    super().__init__(*args, label=f"{item_nb}", style=ButtonStyle.primary, **kwargs)
     self._bot = bot
     self._item_id = item_id
     self._character_id = character_id
@@ -34,10 +35,10 @@ class LootSelectionButton(Button):
           await register_loot(sess, self._item_id, self._character_id)
       self.view.stop()
       self.view.clear_items()
-      await interaction.response.send_message(f"Loot registered.", ephemeral=True, view=self.view)
+      await interaction.response.edit_message(content=f"Loot registered.", view=None, embed=None)
     except InvalidArgument as e:
       self.view.enable_all_items()
-      return await interaction.response.send_message(f"Cannot register the loot: {str(e)}.", ephemeral=True)
+      return await interaction.response.edit_message(content=f"Cannot register the loot: {str(e)}.", view=None, embed=None)
 
 
 class LootListSelectorView(View):
@@ -57,6 +58,7 @@ class LootListSelectorView(View):
 
     for button in self._buttons:
       self.add_item(button)
+    self.add_item(CancelButton())
 
 
     

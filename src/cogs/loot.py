@@ -40,7 +40,7 @@ class LootCog(commands.Cog):
           items = await items_search(sess, item_name, item_id, max_items=max_items + 1)
           item_list_embed = ItemListEmbed(items, max_items=max_items, title="Matches:")
           item_list_selector_view = LootListSelectorView(self.bot, items, character.id, max_items=max_items)
-          await ctx.respond(embed=item_list_embed, view=item_list_selector_view)
+          await ctx.respond(embed=item_list_embed, view=item_list_selector_view, ephemeral=True)
 
     except InvalidArgument as e:
       await ctx.respond(f"Cannot add loot: {str(e)}", ephemeral=True)
