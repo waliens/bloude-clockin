@@ -1,9 +1,8 @@
 import datetime
-import select
 
 from discord import InvalidArgument
 import pytz
-from sqlalchemy import insert
+from sqlalchemy import insert, or_, select
 from models import Character, Item, Loot
 
 from sqlalchemy.exc import NoResultFound, IntegrityError
@@ -17,7 +16,7 @@ def strcmp_sql_fn(field, query, exact=True):
     return field.ilike(f"%{t_query}%")
 
 
-async def items_search(sess, name=None, _id=None):
+async def items_search(sess, name=None, _id=None, max_items=-1):
   """At least name or id should be provided, otherwise invalid argument error is raised"""
   try:
     if _id is not None:
@@ -30,7 +29,9 @@ async def items_search(sess, name=None, _id=None):
  
     # attempt exact match 
     name_fields = [Item.name_en, Item.name_fr]
-    exact_match_query = select(Item).where(*[strcmp_sql_fn(f, name) for f in name_fields])
+    exact_match_query = select(Item).where(or_(*[strcmp_sql_fn(f, name) for f in name_fields])).order_by(Item.id)
+    if max_items > 0:
+      exact_match_query = exact_match_query.limit(max_items)
     exact_results = await sess.execute(exact_match_query)
     exact_items = exact_results.scalars().all()
 
@@ -38,7 +39,9 @@ async def items_search(sess, name=None, _id=None):
       return exact_items
 
     # no exact match 
-    loose_match_query = select(Item).where(*[strcmp_sql_fn(f, name, exact=False) for f in name_fields])
+    loose_match_query = select(Item).where(or_(*[strcmp_sql_fn(f, name, exact=False) for f in name_fields])).order_by(Item.id)
+    if max_items > 0:
+      loose_match_query = loose_match_query.limit(max_items)
     loose_results = await sess.execute(loose_match_query)
     loose_items = loose_results.scalars().all()
     
