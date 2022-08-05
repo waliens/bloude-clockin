@@ -2,36 +2,85 @@
 
 
 import select
-from discord import Bot, Guild, InvalidArgument, Option, guild_only, slash_command
+from discord import Bot, Guild, Interaction, InvalidArgument, Option, SlashCommandGroup, guild_only, slash_command
 from discord.ext import commands
+from sqlalchemy import update
 from db_util.charter import get_guild_charter
-from models import GuildCharter
+from models import GuildCharter, GuildCharterField
 
 from ui.guild_info import GuildCharterEmbed
+from ui.util import EmbedFieldEditorModal
 
 
 class GuildInfoCog(commands.Cog):
   def __init__(self, bot):
       self.bot = bot
-      
-  @slash_command(description="Charte de guilde")
+
+  charter_group = SlashCommandGroup("charter", "Display, update and sign tracking of a guild charter.")
+  charter_section_group = charter_group.create_subgroup("section", "To handle creation, update and deletion of command groups.")
+
+  @charter_group.command(description="Charte de guilde")
   @guild_only()
-  async def charter(self, ctx, 
+  async def show(self, ctx, 
     section: Option(int, description="A section number of the charter") = None, 
-    show: Option(bool, description="To show the bot response and the charter publicly") = False, 
-    official: Option(bool, description="To make this charter message the one that has to be signed. Removes the old charter if any.") =False):
+    public: Option(bool, description="To show the bot response and the charter publicly") = False
+  ):
     try:
       guild_id = str(ctx.guild.id)
-      if (show or official) and not ctx.author.guild_permissions.administrator:
-        raise InvalidArgument("cannot use this command without admin role")
+      if public and not ctx.author.guild_permissions.administrator:
+        raise InvalidArgument("cannot display charter without admin role")
 
       async with self.bot.db_session() as sess:
         async with sess.begin():
           charter = await get_guild_charter(sess, guild_id)
           embed = GuildCharterEmbed(charter, section=section)
-          await ctx.respond(embed=embed, ephemeral=not show)
+          await ctx.respond(embed=embed, ephemeral=not public)
     except InvalidArgument as e:
       await ctx.respond(f"Cannot display rules: {str(e)}")
+
+  @charter_section_group.command(description="edit a section of the charter")
+  @commands.has_permissions(administrator=True)
+  @guild_only()
+  async def update(self, ctx,
+    section: Option(int, description="The number of the section to update") = None,
+    title: Option(str, description="Specify to update the title of the charter") = None
+  ):
+    try:
+      guild_id = str(ctx.guild.id)
+      if title is None and section is None:
+        raise InvalidArgument("nothing to update, specify either title or section")
+
+      async with self.bot.db_session() as sess:
+        async with sess.begin():
+          charter = await get_guild_charter(sess, guild_id)
+          if not charter.has_section(section):
+            raise InvalidArgument("no such section")
+          section = charter.get_section(section)
+
+          async def submit_callback(interaction: Interaction, title: str, content: str):
+            if title is None or content is None or not 0 < len(title) <= 256 or not 0 < len(content) <= 1000:
+              raise InvalidArgument("invalid title or content")
+            async with self.bot.db_session() as clbk_sess:
+              async with clbk_sess.begin():
+                query = update(GuildCharterField).where(
+                  GuildCharterField.id_guild == guild_id, 
+                  GuildCharterField.number == section.number
+                ).values(title=title, content=content)
+                await clbk_sess.execute(query)
+                await interaction.response.send_message(content="Guild charter section updated.", ephemeral=True)
+
+          modal = EmbedFieldEditorModal(
+            submit_callback,
+            title=f"Section {(section.number)}", 
+            title_field_value=section.title, 
+            content_field_value=section.content
+          )
+
+          await ctx.send_modal(modal)
+    except InvalidArgument as e:
+      await ctx.respond(f"Cannot display rules: {str(e)}")
+
+
 
 
 def setup(bot: Bot):

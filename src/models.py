@@ -91,6 +91,13 @@ class GuildCharter(Base):
 
   fields = relationship("GuildCharterField", lazy="joined")
 
+  def get_section(self, number):
+    filtered = [f for f in self.fields if f.number == number]
+    return filtered[0]
+
+  def has_section(self, number):
+    return len([f for f in self.fields if f.number == number]) != 0
+
 
 class GuildCharterField(Base):
   __tablename__ = "guild_charter_field"

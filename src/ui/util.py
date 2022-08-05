@@ -1,8 +1,9 @@
 
 
 from abc import abstractmethod
-from discord.ui import Button, Select
-from discord import ButtonStyle, Interaction, SelectOption
+from csv import excel
+from discord.ui import Button, Select, Modal, InputText
+from discord import ButtonStyle, InputTextStyle, Interaction, InvalidArgument, SelectOption
 
 
 class DeferSelect(Select):
@@ -34,3 +35,51 @@ class CancelButton(Button):
 
 
 
+class EmbedFieldEditorModal(Modal):
+  def __init__(self, 
+    submit_callback, *args, 
+    title_field_name="Title", 
+    title_field_value="", 
+    content_field_name="Content", 
+    content_field_value="", **kwargs
+  ) -> None:
+    """
+    Parameters
+    ----------
+    submit_callback: async callback
+      Handles modal submission and sends a response to the interaction, fn(interaction, title, content)
+    title_field_name: str
+    title_field_value: str
+    content_field_name: str
+    content_field_value: str
+    """
+    super().__init__(*args, **kwargs)
+
+    # title
+    self._title_field = InputText(
+      label=title_field_name, 
+      value=title_field_value, 
+      min_length=1,
+      max_length=256,
+      style=InputTextStyle.short
+    )
+    self.add_item(self._title_field)
+    
+    # content
+    self._content_field = InputText(
+      label=content_field_name, 
+      value=content_field_value, 
+      min_length=1,
+      max_length=1000,
+      style=InputTextStyle.long
+    )
+    self.add_item(self._content_field)
+
+    # callback(interaction, title, field), should also send response
+    self._submit_callback = submit_callback
+    
+  async def callback(self, interaction: Interaction):
+    try:
+      await self._submit_callback(interaction, self._title_field.value, self._content_field.value)
+    except InvalidArgument as e:
+      await interaction.response.send_message(content="cannot submit modal", ephemeral=True)
