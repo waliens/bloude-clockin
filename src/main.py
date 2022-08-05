@@ -1,5 +1,6 @@
 # environment variables
 import os
+from discord import Intents
 import dotenv
 import asyncio
 import logging
@@ -15,5 +16,8 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(level)  # only override default logger 
   
   # bot
-  bot = BloudeClockInBot()
+  intents = Intents.default()
+  intents.members = True
+
+  bot = BloudeClockInBot(intents=intents)
   bot.run(os.getenv("BOT_TOKEN"))
