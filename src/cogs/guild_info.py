@@ -30,7 +30,7 @@ class GuildInfoCog(commands.Cog):
       if public and not ctx.author.guild_permissions.administrator:
         raise InvalidArgument("cannot display charter without admin role")
 
-      async with self.bot.db_session() as sess:
+      async with self.bot.db_session_class() as sess:
         async with sess.begin():
           charter = await get_guild_charter(sess, guild_id)
           embed = GuildCharterEmbed(charter, section=section)
@@ -46,7 +46,7 @@ class GuildInfoCog(commands.Cog):
     sign_role: Option(Role, description="The role assigned to people who sign the charter")
   ):
     guild_id = str(ctx.guild.id)
-    async with self.bot.db_session() as sess:
+    async with self.bot.db_session_class() as sess:
       async with sess.begin():
         charter = await get_guild_charter(sess, guild_id)
         embed = GuildCharterEmbed(charter)
@@ -68,7 +68,7 @@ class GuildInfoCog(commands.Cog):
       if title is not None and not 0 < len(title) <= 256:
         raise InvalidArgument("title is too short/long")
 
-      async with self.bot.db_session() as sess:
+      async with self.bot.db_session_class() as sess:
         async with sess.begin():
           charter = await get_guild_charter(sess, guild_id)
           if title is not None:
@@ -86,7 +86,7 @@ class GuildInfoCog(commands.Cog):
           async def submit_callback(interaction: Interaction, title: str, content: str):
             if title is None or content is None or not 0 < len(title) <= 256 or not 0 < len(content) <= 1000:
               raise InvalidArgument("invalid title or content")
-            async with self.bot.db_session() as clbk_sess:
+            async with self.bot.db_session_class() as clbk_sess:
               async with clbk_sess.begin():
                 query = update(GuildCharterField).where(
                   GuildCharterField.id_guild == guild_id, 

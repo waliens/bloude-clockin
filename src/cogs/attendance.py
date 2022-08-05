@@ -35,7 +35,7 @@ class AttendanceCog(commands.Cog):
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       raid_datetime = parse_datetime(raid_datetime, default=datetime.datetime.now(tz=pytz.UTC)).replace(tzinfo=None)
 
-      async with self.bot.db_session() as sess:
+      async with self.bot.db_session_class() as sess:
         async with sess.begin():
           character = await get_character(sess, guild_id, user_id, name=char_name)
           raids = await get_raids(sess)
@@ -62,7 +62,7 @@ class AttendanceCog(commands.Cog):
       date_from = parse_date(date_from, default=datetime.date.today())
       date_to = parse_date(date_to, default=datetime.date.today())
 
-      async with self.bot.db_session() as sess:
+      async with self.bot.db_session_class() as sess:
         async with sess.begin():
           character = await get_character(sess, guild_id, user_id, char_name)
           attendances, actual_datetime_range = await fetch_attendances(sess, character.id, date_from, date_to)

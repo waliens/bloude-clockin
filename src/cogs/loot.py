@@ -33,7 +33,7 @@ class LootCog(commands.Cog):
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       guild_id = str(ctx.guild_id)
 
-      async with self.bot.db_session() as sess:
+      async with self.bot.db_session_class() as sess:
         async with sess.begin():
           max_items = 10
           character = await get_character(sess, guild_id, user_id, char_name)

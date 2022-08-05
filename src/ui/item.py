@@ -30,7 +30,7 @@ class LootSelectionButton(Button):
   async def callback(self, interaction: Interaction):
     try:
       self.view.disable_all_items()
-      async with self._bot.db_session() as sess:
+      async with self._bot.db_session_class() as sess:
         async with sess.begin():
           await register_loot(sess, self._item_id, self._character_id)
       self.view.stop()

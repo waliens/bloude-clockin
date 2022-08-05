@@ -25,7 +25,7 @@ class RaidSelectorModal(View):
     async def button_callback(interaction: Interaction):
 
       try:
-        async with self._bot.db_session() as sess:
+        async with self._bot.db_session_class() as sess:
           async with sess.begin():
             await record_attendance(
               sess, 

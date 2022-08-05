@@ -1,12 +1,13 @@
 import logging
 import os
+from discord import RawReactionActionEvent
 from discord.ext import commands
 from database import init_db
 
 class BloudeClockInBot(commands.Bot):
   def __init__(self, *args, **kwargs) -> None:
     super().__init__(*args, **kwargs)
-
+  
     cog_exts = [
       "hello", 
       "character",
@@ -23,12 +24,13 @@ class BloudeClockInBot(commands.Bot):
       else:
         logging.getLogger().error("loading '{}': {}".format(cog_full_ext, str(result[cog_full_ext])))
         
-    self._db_session = None
+    self._db_session_class = None
     self._db_engine = None
+    self._db_session = None
 
   @property
-  def db_session(self):
-    return self._db_session
+  def db_session_class(self):
+    return self._db_session_class
 
   @property
   def db_engine(self):
@@ -54,15 +56,19 @@ class BloudeClockInBot(commands.Bot):
     logging.getLogger().info("Bot `{}` disconnected from the database.".format(self.bot_classname))
 
   async def _do_disconnect_db(self):
+    if self._db_session is not None:
+      self._db_session.close()
     if self._db_engine is not None:
       await self._db_engine.dispose()
 
-    self._db_engine = None
     self._db_session = None
+    self._db_engine = None
+    self._db_session_class = None
 
   async def _connect_db(self):
     await self._do_disconnect_db()
-    self._db_session, self._db_engine = await init_db()
+    self._db_session_class, self._db_engine = await init_db()
+    self._db_session = self._db_session_class()
     logging.getLogger().info("Bot `{}` successfully connected to the database.".format(self.bot_classname))
 
   @property

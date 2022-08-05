@@ -33,7 +33,7 @@ class CharacterCog(commands.Cog):
       guild_id = str(ctx.guild_id)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       
-      async with self.bot.db_session() as sess:
+      async with self.bot.db_session_class() as sess:
         async with sess.begin():
           character = await add_character(sess, user_id, guild_id, name, role, character_class, is_main=is_main)
           await ctx.respond(f"The new character '{character.name}' was added (main: {character.is_main}).", ephemeral=True)
@@ -60,7 +60,7 @@ class CharacterCog(commands.Cog):
       guild_id = str(ctx.guild_id)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       
-      async with self.bot.db_session() as sess:
+      async with self.bot.db_session_class() as sess:
         async with sess.begin():
           character = await update_character(sess, user_id, guild_id, name, new_name, is_main=is_main, role=role, character_class=character_class)
           await ctx.respond(f"Update successful, the character is now named '{character.name}' (main: {character.is_main}).", ephemeral=True)
@@ -77,7 +77,7 @@ class CharacterCog(commands.Cog):
       guild_id = str(ctx.guild_id)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       
-      async with self.bot.db_session() as sess:
+      async with self.bot.db_session_class() as sess:
         async with sess.begin():
           await delete_character(sess, user_id, guild_id, name)
           await ctx.respond(f"The character was sucessfully deleted, or did not exist.", ephemeral=True)
@@ -94,7 +94,7 @@ class CharacterCog(commands.Cog):
       guild_id = str(ctx.guild_id)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
     
-      async with self.bot.db_session() as sess:
+      async with self.bot.db_session_class() as sess:
         async with sess.begin():
           characters = (await sess.execute(select(Character).where(
             Character.id_user == user_id,
