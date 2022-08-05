@@ -6,7 +6,7 @@ from sqlalchemy.exc import NoResultFound
 
 from ui.guild_info import GuildCharter
 
-async def get_guild_charter(sess, id_guild):
+async def get_guild_charter(sess, id_guild: str):
   """Get the charter of a guild"""
   try:
     query = select(GuildCharter).where(GuildCharter.id_guild == id_guild)

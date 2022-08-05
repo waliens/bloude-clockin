@@ -2,7 +2,7 @@
 
 
 import select
-from discord import Bot, Guild, Interaction, InvalidArgument, Option, SlashCommandGroup, guild_only, slash_command
+from discord import ApplicationContext, Bot, Emoji, Guild, Interaction, InvalidArgument, Option, Role, SlashCommandGroup, guild_only, slash_command
 from discord.ext import commands
 from sqlalchemy import update
 from db_util.charter import get_guild_charter
@@ -38,6 +38,22 @@ class GuildInfoCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(f"Cannot display rules: {str(e)}")
 
+  @charter_group.command(description="Publish the charter and enable sign tracking.")
+  @commands.has_permissions(administrator=True)
+  @guild_only()
+  async def publish(self, ctx: ApplicationContext,
+    sign_emoji: Option(str, description="The id of the reaction emoji for signing the charter."),
+    sign_role: Option(Role, description="The role assigned to people who sign the charter")
+  ):
+    guild_id = str(ctx.guild.id)
+    async with self.bot.db_session() as sess:
+      async with sess.begin():
+        charter = await get_guild_charter(sess, guild_id)
+        embed = GuildCharterEmbed(charter)
+        interaction = await ctx.response.send_message(embed=embed)
+        print(ctx.channel_id, sign_emoji, sign_role.id)
+        
+
   @charter_section_group.command(description="edit a section of the charter")
   @commands.has_permissions(administrator=True)
   @guild_only()
@@ -49,10 +65,20 @@ class GuildInfoCog(commands.Cog):
       guild_id = str(ctx.guild.id)
       if title is None and section is None:
         raise InvalidArgument("nothing to update, specify either title or section")
+      if title is not None and not 0 < len(title) <= 256:
+        raise InvalidArgument("title is too short/long")
 
       async with self.bot.db_session() as sess:
         async with sess.begin():
           charter = await get_guild_charter(sess, guild_id)
+          if title is not None:
+            charter.title = title
+            await sess.commit()
+
+          if section is None:
+            await ctx.respond("Title updated.")
+            return 
+
           if not charter.has_section(section):
             raise InvalidArgument("no such section")
           section = charter.get_section(section)
