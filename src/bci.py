@@ -83,29 +83,53 @@ class BloudeClockInBot(commands.Bot):
     return self.__class__.__name__
 
   async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
-      """Watch for reactions on published charters."""
-      guild = self.get_guild(payload.guild_id)
-      if guild is None:
-          return
+    """Watch for reactions on published charters."""
+    guild = self.get_guild(payload.guild_id)
+    if guild is None:
+        return
+    
+    sess = self._db_session
+    async with sess.begin():
+      guild_id = str(guild.id)
+      result = await sess.execute(select(GuildCharter).where(GuildCharter.id_guild == guild_id))
+      charter = result.unique().scalars().one_or_none()
+      sign_emoji = PartialEmoji(name=charter.sign_emoji)
+      if charter is None or charter.id_sign_message is None or \
+          charter.id_sign_message != str(payload.message_id) or payload.emoji != sign_emoji:
+        return
+
+      role = guild.get_role(int(charter.id_sign_role))
+      if role is None: # role does not exists
+        return 
       
-      sess = self._db_session
-      async with sess.begin():
-        guild_id = str(guild.id)
-        result = await sess.execute(select(GuildCharter).where(GuildCharter.id_guild == guild_id))
-        charter = result.unique().scalars().one_or_none()
-        sign_emoji = PartialEmoji(name=charter.sign_emoji)
-        if charter is None or charter.id_sign_message is None or \
-            charter.id_sign_message != str(payload.message_id) or payload.emoji != sign_emoji:
-          return
+      try:
+        await payload.member.add_roles(role) 
+      except discord.HTTPException as e:
+        logging.getLogger().error(f"cannot add reaction role: {str(e)}")
 
-        role = guild.get_role(int(charter.id_sign_role))
-        if role is None: # role does not exists
-          return 
-        
-        try:
-          await payload.member.add_roles(role) 
-        except discord.HTTPException as e:
-          logging.getLogger().error(f"cannot add reaction role: {str(e)}")
+  async def on_raw_reaction_remove(self, payload: RawReactionActionEvent):
+    guild = self.get_guild(payload.guild_id)
+    if guild is None:
+      return
+    sess = self._db_session
+    async with sess.begin():
+      guild_id = str(guild.id)
+      result = await sess.execute(select(GuildCharter).where(GuildCharter.id_guild == guild_id))
+      charter = result.unique().scalars().one_or_none()
+      sign_emoji = PartialEmoji(name=charter.sign_emoji)
 
+      if charter is None or charter.id_sign_message is None or \
+          charter.id_sign_message != str(payload.message_id) or payload.emoji != sign_emoji:
+        return
+      
+      role = guild.get_role(int(charter.id_sign_role))
+      member = guild.get_member(payload.user_id)
+      if role is None or member is None: # role does not exists
+        return 
 
-  
+      try:
+        await member.remove_roles(role) 
+      except discord.HTTPException as e:
+        logging.getLogger().error(f"cannot remove reaction role: {str(e)}")
+    
+      
