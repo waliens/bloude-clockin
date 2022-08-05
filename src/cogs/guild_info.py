@@ -42,16 +42,20 @@ class GuildInfoCog(commands.Cog):
   @commands.has_permissions(administrator=True)
   @guild_only()
   async def publish(self, ctx: ApplicationContext,
-    sign_emoji: Option(str, description="The id of the reaction emoji for signing the charter."),
+    sign_emoji: Option(str, description="The reaction emoji for signing the charter."),
     sign_role: Option(Role, description="The role assigned to people who sign the charter")
   ):
     guild_id = str(ctx.guild.id)
     async with self.bot.db_session_class() as sess:
       async with sess.begin():
         charter = await get_guild_charter(sess, guild_id)
-        embed = GuildCharterEmbed(charter)
-        interaction = await ctx.response.send_message(embed=embed)
-        print(ctx.channel_id, sign_emoji, sign_role.id)
+        charter.sign_emoji = sign_emoji
+        charter.id_sign_role = str(sign_role.id)
+        embed = GuildCharterEmbed(charter, sign_info=True)
+        interaction = await ctx.send(embed=embed)
+        charter.id_sign_message = str(interaction.id)
+        sess.add(charter)
+        await sess.commit()
         
 
   @charter_section_group.command(description="edit a section of the charter")

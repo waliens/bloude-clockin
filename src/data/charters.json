@@ -2,9 +2,8 @@
   {
    "id_guild": "1000690135068848158", 
    "title": "<:scroll:1004784665615405106> Charte de guilde <:scroll:1004784665615405106>",
-   "id_sign_channel": null,
    "id_sign_message": null,
-   "id_sign_emoji": null,
+   "sign_emoji": null,
    "id_sign_role": null,
    "fields": [
     {"number": 1, "title": "La guilde Bloude, son histoire, son terroir <:dna:1004786791057981480>", "content": "La guilde a été fondée en 2015 sur le serveur privé The Geek Crusade par des joueurs liés par l'envie de profiter ensemble du jeu sans prise de tête. Le cœur de la guilde a migré vers WoW Classic sur le serveur Auberdine en août 2019. Cela fait de nous la plus ancienne guilde du serveur.\n\nLa guilde est à la fois un peu try-hard, et un peu casu avec une orientation PVE HL (mais compte un bon nombre d’adeptes du PvP). Nous sommes pour la majorité des adultes, avec un travail et une famille, néanmoins nous faisons ce qu'il faut pour tirer au maximum de notre temps libre. Le roster est assez compétitif, avec des persos optis, des joueurs et joueuses sérieux.\n\nOn peut définir Bloude comme étant une guilde soudée à l'ambiance bonne enfant, sans pour autant être beauf ce qui contribue au confort des joueurs comme des joueuses. Avec une structure relativement horizontal, l’avis de chacun compte ! Cela dit, chez nous, l’intérêt de la guilde prime toujours sur celui du joueur (peu importe qui)."},
@@ -18,9 +17,8 @@
   {
     "id_guild": "617069087096569896", 
     "title": "<:scroll:1004784665615405106> Charte de guilde <:scroll:1004784665615405106>",
-    "id_sign_channel": null,
     "id_sign_message": null,
-    "id_sign_emoji": null,
+    "sign_emoji": null,
     "id_sign_role": null,
     "fields": [
      {"number": 1, "title": "La guilde Bloude, son histoire, son terroir <:dna:1004786791057981480>", "content": "La guilde a été fondée en 2015 sur le serveur privé The Geek Crusade par des joueurs liés par l'envie de profiter ensemble du jeu sans prise de tête. Le cœur de la guilde a migré vers WoW Classic sur le serveur Auberdine en août 2019. Cela fait de nous la plus ancienne guilde du serveur.\n\nLa guilde est à la fois un peu try-hard, et un peu casu avec une orientation PVE HL (mais compte un bon nombre d’adeptes du PvP). Nous sommes pour la majorité des adultes, avec un travail et une famille, néanmoins nous faisons ce qu'il faut pour tirer au maximum de notre temps libre. Le roster est assez compétitif, avec des persos optis, des joueurs et joueuses sérieux.\n\nOn peut définir Bloude comme étant une guilde soudée à l'ambiance bonne enfant, sans pour autant être beauf ce qui contribue au confort des joueurs comme des joueuses. Avec une structure relativement horizontal, l’avis de chacun compte ! Cela dit, chez nous, l’intérêt de la guilde prime toujours sur celui du joueur (peu importe qui)."},

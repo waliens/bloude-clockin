@@ -1,8 +1,11 @@
 import logging
 import os
-from discord import RawReactionActionEvent
+from discord import PartialEmoji, RawReactionActionEvent
+import discord
 from discord.ext import commands
+from sqlalchemy import select
 from database import init_db
+from models import GuildCharter
 
 class BloudeClockInBot(commands.Bot):
   def __init__(self, *args, **kwargs) -> None:
@@ -35,6 +38,10 @@ class BloudeClockInBot(commands.Bot):
   @property
   def db_engine(self):
     return self._db_engine
+
+  @property
+  def db_session(self):
+    return self._db_session
   
   async def on_ready(self):
     logging.getLogger().info("Bot `{}` is ready.".format(self.bot_classname))
@@ -74,3 +81,31 @@ class BloudeClockInBot(commands.Bot):
   @property
   def bot_classname(self):
     return self.__class__.__name__
+
+  async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
+      """Watch for reactions on published charters."""
+      guild = self.get_guild(payload.guild_id)
+      if guild is None:
+          return
+      
+      sess = self._db_session
+      async with sess.begin():
+        guild_id = str(guild.id)
+        result = await sess.execute(select(GuildCharter).where(GuildCharter.id_guild == guild_id))
+        charter = result.unique().scalars().one_or_none()
+        sign_emoji = PartialEmoji(name=charter.sign_emoji)
+        if charter is None or charter.id_sign_message is None or \
+            charter.id_sign_message != str(payload.message_id) or payload.emoji != sign_emoji:
+          return
+
+        role = guild.get_role(int(charter.id_sign_role))
+        if role is None: # role does not exists
+          return 
+        
+        try:
+          await payload.member.add_roles(role) 
+        except discord.HTTPException as e:
+          logging.getLogger().error(f"cannot add reaction role: {str(e)}")
+
+
+  
