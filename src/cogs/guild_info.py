@@ -2,7 +2,7 @@
 
 
 import select
-from discord import ApplicationContext, Bot, Emoji, Guild, Interaction, InvalidArgument, Option, Role, SlashCommandGroup, guild_only, slash_command
+from discord import ApplicationContext, Bot, Embed, Emoji, Guild, Interaction, InvalidArgument, Option, Role, SlashCommandGroup, guild_only, slash_command
 from discord.ext import commands
 from sqlalchemy import update
 from db_util.charter import get_guild_charter
@@ -109,6 +109,34 @@ class GuildInfoCog(commands.Cog):
           await ctx.send_modal(modal)
     except InvalidArgument as e:
       await ctx.respond(f"Cannot display rules: {str(e)}")
+
+  @charter_group.command()
+  @commands.has_permissions(administrator=True)
+  @guild_only()
+  async def unsigned(self, ctx: ApplicationContext,
+    with_role: Option(Role, description="Only list unsigned people also attributed with this role.") = None
+  ):
+    try:
+      async with self.bot.db_session_class() as sess:
+        async with sess.begin():
+          charter = await get_guild_charter(sess, str(ctx.guild.id))
+
+          if charter.id_sign_message is None:
+            raise InvalidArgument("no charter configured")
+          
+          sign_role = ctx.guild.get_role(int(charter.id_sign_role))
+          
+          signed_members = {m.id for m in sign_role.members}
+          unsigned_members = list()
+          for member in (ctx.guild.members if with_role is None else with_role.members):
+            if member.id not in signed_members and not member.bot:
+              unsigned_members.append(member)
+          
+          embed = Embed(title="Unsigned", description="\n".join([f"- <@{m.id}>" for m in unsigned_members]))
+          await ctx.respond(embed=embed)
+
+    except InvalidArgument as e:
+      await ctx.respond(f"Cannot list unsigned: {str(e)}")
 
 
 
