@@ -3,6 +3,10 @@ import datetime
 from discord import InvalidArgument
 
 
+def default_if_none(v, d=None):
+  return d if v is None else v
+
+
 def get_applied_user_id(ctx, for_user, user_id):
   """return the id to which the query should be applied"""
   if for_user is None:

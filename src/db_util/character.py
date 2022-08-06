@@ -1,4 +1,5 @@
 import datetime
+from turtle import pos
 from discord import InvalidArgument
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import NoResultFound
@@ -73,7 +74,7 @@ async def add_character(session, id_user: str, id_guild: str, name: str, role: R
   return new_character
   
 
-async def update_character(session, id_user: str, id_guild: str, name: str, new_name: str = None, is_main: bool = False, role: RoleEnum=None, character_class: ClassEnum=None):
+async def update_character(session, id_user: str, id_guild: str, name: str, new_name: str = None, is_main: bool = False, role: RoleEnum=None, character_class: ClassEnum=None, spec: SpecEnum=None):
   """Updates a character
   Parameters
   ----------
@@ -93,6 +94,8 @@ async def update_character(session, id_user: str, id_guild: str, name: str, new_
     The role of the character
   character_class: ClassEnum (optional)
     The class of the character
+  spec: SpecEnum (optional)
+    The spec of the character
 
   Returns
   -------
@@ -129,10 +132,24 @@ async def update_character(session, id_user: str, id_guild: str, name: str, new_
 
   if not is_valid_class_role(current_character.character_class, current_character.role):
     raise InvalidArgument(f'invalid class/role combination')
+  
+  current_spec = current_character.spec
+  possible_specs = set(current_character.character_class.get_specs(current_character.role))
+  invalid_spec_message = "invalid spec for this class/role combination"
+  if SpecEnum.has_spec(current_character.character_class, current_character.role):
+    if spec is not None and spec in possible_specs:
+      current_character.spec = spec
+    elif not (spec is None and current_spec in possible_specs):
+      raise InvalidArgument(invalid_spec_message) 
+  else:
+    if spec is None:
+      current_character.spec = None
+    else:
+      raise InvalidArgument(invalid_spec_message)
 
   await session.commit()
 
-  return await session.get(Character, current_character.id)
+  return current_character
 
 
 async def delete_character(session, id_user: str, id_guild: str, name: str):

@@ -8,8 +8,8 @@ from sqlalchemy import select
 
 from ui.character import SpecSelectionView
 
-from .util import get_applied_user_id
-from db_util.character import add_character, update_character, delete_character
+from .util import default_if_none, get_applied_user_id
+from db_util.character import add_character, get_character, update_character, delete_character
 from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
 from models import Character
 
@@ -48,7 +48,7 @@ class CharacterCog(commands.Cog):
                   return success_msg.format(name=character.name, is_main=character.is_main)
 
             view = SpecSelectionView(click_callback, character_class, role)
-            await ctx.respond("Pick a spec:", view=view, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
           else:
             character = await add_character(sess, user_id, guild_id, name, role, character_class, is_main=is_main)
             await ctx.respond(success_msg.format(name=character.name, is_main=character.is_main), ephemeral=True)
@@ -63,8 +63,8 @@ class CharacterCog(commands.Cog):
     new_name: str = None, 
     is_main: bool = None, 
     for_user: discord.Member = None, 
-    role: RoleEnum = None, 
-    character_class: Option(ClassEnum, "class") = None
+    role: Option(RoleEnum, description="If specified, will also trigger spec update when relevant") = None, 
+    character_class: Option(ClassEnum, name="class", description="If specified, will also trigger spec update when relevant") = None
   ):
     """Update a character (by name)
     """
@@ -77,8 +77,25 @@ class CharacterCog(commands.Cog):
       
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
-          character = await update_character(sess, user_id, guild_id, name, new_name, is_main=is_main, role=role, character_class=character_class)
-          await ctx.respond(f"Update successful, the character is now named '{character.name}' (main: {character.is_main}).", ephemeral=True)
+          old_character = await get_character(sess, guild_id, user_id, name)
+          final_class = default_if_none(character_class, old_character.character_class)
+          final_role = default_if_none(role, old_character.role)
+          success_msg = "Update successful, the character is now named '{name}' (main: {is_main})."
+          if (character_class is not None or role is not None) and SpecEnum.has_spec(final_class, final_role):
+
+            # callback for spec button click
+            async def click_callback(spec: SpecEnum):
+              async with self.bot.db_session_class() as sess:
+                async with sess.begin():
+                  character = await update_character(sess, user_id, guild_id, name, new_name, is_main=is_main, role=role, spec=spec, character_class=character_class)
+                  return success_msg.format(name=character.name, is_main=character.is_main)
+
+            view = SpecSelectionView(click_callback, character_class, role)
+            await ctx.respond(view=view, ephemeral=True)
+          
+          else:
+            character = await update_character(sess, user_id, guild_id, name, new_name, is_main=is_main, role=role, character_class=character_class)
+            await ctx.respond(success_msg.format(name=character.name, is_main=character.is_main), ephemeral=True)
     
     except InvalidArgument as e:
       await ctx.respond(f"Cannot update a character: {str(e)}", ephemeral=True)
