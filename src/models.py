@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 
-from db_util.wow_data import RaidSizeEnum, RoleEnum, ClassEnum
+from db_util.wow_data import RaidSizeEnum, RoleEnum, ClassEnum, SpecEnum
 
 Base = declarative_base()
 
@@ -17,6 +17,7 @@ class Character(Base):
   name = Column(String(255))
   is_main = Column(Boolean)
   role = Column(Enum(RoleEnum))
+  spec = Column(Enum(SpecEnum), nullable=True)
   character_class = Column(Enum(ClassEnum))
   created_at = Column(DateTime)
 

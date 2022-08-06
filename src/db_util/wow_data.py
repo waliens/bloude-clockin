@@ -1,4 +1,5 @@
 from email.mime import base
+from multiprocessing.sharedctypes import Value
 import re
 from enum import Enum
 
@@ -248,19 +249,6 @@ class StatsEnum(HumanReadableEnum):
   BLOCK_VALUE = 48
 
 
-class ClassEnum(HumanReadableEnum):
-  WARRIOR = 1
-  PALADIN = 2
-  HUNTER = 3
-  ROGUE = 4
-  PRIEST = 5
-  DEATH_KNIGHT = 6
-  SHAMAN = 7
-  MAGE = 8
-  WARLOCK = 9
-  DRUID = 11
-
-
 class RoleEnum(HumanReadableEnum):
   TANK = 1
   HEALER = 2
@@ -276,6 +264,100 @@ class RoleEnum(HumanReadableEnum):
     else: 
       base_name = super().name_hr
     return base_name
+
+
+class ClassEnum(HumanReadableEnum):
+  WARRIOR = 1
+  PALADIN = 2
+  HUNTER = 3
+  ROGUE = 4
+  PRIEST = 5
+  DEATH_KNIGHT = 6
+  SHAMAN = 7
+  MAGE = 8
+  WARLOCK = 9
+  DRUID = 11
+
+  def get_specs(self, role: RoleEnum):
+    if self == self.ROGUE and role == RoleEnum.MELEE_DPS:
+      return [SpecEnum.ROGUE_ASSA, SpecEnum.ROGUE_COMBAT]
+    elif self == self.SHAMAN and role == RoleEnum.MELEE_DPS:
+      return [SpecEnum.SHAMAN_ENHANCE, SpecEnum.SHAMAN_SPELLHANCE]
+    elif self == self.WARLOCK and role == RoleEnum.RANGED_DPS:
+      return [SpecEnum.WARLOCK_AFFLI, SpecEnum.WARLOCK_DEMONO]
+    else:
+      return []
+
+  @staticmethod
+  def get_all_specs_with_class():
+    return {(c, s) for c in ClassEnum for s in c.get_specs()}
+
+
+class SpecEnum(HumanReadableEnum):
+  SHAMAN_ENHANCE = 1
+  SHAMAN_SPELLHANCE = 2
+  WARLOCK_AFFLI = 3
+  WARLOCK_DEMONO = 4
+  ROGUE_COMBAT = 5
+  ROGUE_ASSA = 6
+
+  @property
+  def name_hr(self):
+    if self == self.SHAMAN_ENHANCE:
+      return "Enhance"
+    elif self == self.SHAMAN_SPELLHANCE:
+      return "Spellhance"
+    elif self == self.WARLOCK_AFFLI:
+      return "Afflication"
+    elif self == self.WARLOCK_DEMONO:
+      return "Demonology"
+    elif self == self.ROGUE_COMBAT:
+      return "Combat"
+    elif self == self.ROGUE_ASSA:
+      return "Assassination"
+    else:
+      return super().name_hr
+
+  @property
+  def character_class(self):
+    if self == self.SHAMAN_ENHANCE:
+      return ClassEnum.SHAMAN  
+    elif self == self.SHAMAN_SPELLHANCE:
+      return ClassEnum.SHAMAN
+    elif self == self.WARLOCK_AFFLI:
+      return ClassEnum.WARLOCK
+    elif self == self.WARLOCK_DEMONO:
+      return ClassEnum.WARLOCK
+    elif self == self.ROGUE_COMBAT:
+      return ClassEnum.ROGUE
+    elif self == self.ROGUE_ASSA:
+      return ClassEnum.ROGUE
+    else:
+      raise ValueError("unknown spec")
+
+  @property
+  def role(self):
+    if self == self.SHAMAN_ENHANCE:
+      return RoleEnum.MELEE_DPS  
+    elif self == self.SHAMAN_SPELLHANCE:
+      return RoleEnum.MELEE_DPS
+    elif self == self.WARLOCK_AFFLI:
+      return RoleEnum.RANGED_DPS
+    elif self == self.WARLOCK_DEMONO:
+      return RoleEnum.RANGED_DPS
+    elif self == self.ROGUE_COMBAT:
+      return RoleEnum.MELEE_DPS
+    elif self == self.ROGUE_ASSA:
+      return RoleEnum.MELEE_DPS
+    else:
+      raise ValueError("unknown spec")
+
+  @staticmethod
+  def has_spec(_class: ClassEnum, role: RoleEnum):
+    return _class == ClassEnum.ROGUE or (_class == ClassEnum.SHAMAN and role == RoleEnum.MELEE_DPS) or (_class == ClassEnum.WARLOCK and role == RoleEnum.RANGED_DPS) 
+  
+  def is_valid_for_class_role(self, _class: ClassEnum, role: RoleEnum):
+    return self.role == role and self.character_class == _class
 
 
 class RaidSizeEnum(HumanReadableEnum):

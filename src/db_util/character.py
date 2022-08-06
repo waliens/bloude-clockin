@@ -2,7 +2,7 @@ import datetime
 from discord import InvalidArgument
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import NoResultFound
-from db_util.wow_data import ClassEnum, RoleEnum, is_valid_class_role
+from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum, is_valid_class_role
 from models import Character
 
 
@@ -14,7 +14,7 @@ def get_character_by_name(models, name):
   return [c for c in models if c.name.lower() == name.lower()][0]
 
 
-async def add_character(session, id_user: str, id_guild: str, name: str, role: RoleEnum, character_class: ClassEnum, is_main: bool=False):
+async def add_character(session, id_user: str, id_guild: str, name: str, role: RoleEnum, character_class: ClassEnum, spec: SpecEnum=None, is_main: bool=False):
   """Adds a character, if not exists
   Parameters
   ----------
@@ -26,12 +26,16 @@ async def add_character(session, id_user: str, id_guild: str, name: str, role: R
     Discord guild identifier
   name: str
     Character name
-  is_main: bool
-    Whether or not the character should be the main one
   role: RoleEnum
     The role of the character
+
   character_class: ClassEnum
     The class of the character
+  spec: SpecEnum (optional)
+    The character's spec, None for no specific spec
+  is_main: bool (optional)
+    Whether or not the character should be the main one
+
 
   Returns
   -------
@@ -44,6 +48,9 @@ async def add_character(session, id_user: str, id_guild: str, name: str, role: R
 
   if not is_valid_class_role(character_class, role):
     raise InvalidArgument(f'invalid class/role combination')
+
+  if spec is not None and not spec.is_valid_for_class_role(character_class, role):
+    raise InvalidArgument(f"invalid spec for class/role combination")
   
   if len(user_characters) > 0 and has_character_by_name(user_characters, name):
     raise InvalidArgument(f"such a character '{name}' already exists.")
@@ -55,6 +62,7 @@ async def add_character(session, id_user: str, id_guild: str, name: str, role: R
     is_main=len(user_characters) == 0 or is_main, 
     created_at=datetime.datetime.now(),
     role=role,
+    spec=spec,
     character_class=character_class
   )
 

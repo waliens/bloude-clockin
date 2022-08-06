@@ -6,9 +6,11 @@ from discord import InvalidArgument, Option, guild_only, slash_command
 from discord.ext import commands
 from sqlalchemy import select
 
+from ui.character import SpecSelectionView
+
 from .util import get_applied_user_id
 from db_util.character import add_character, update_character, delete_character
-from db_util.wow_data import ClassEnum, RoleEnum
+from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
 from models import Character
 
 
@@ -20,7 +22,7 @@ class CharacterCog(commands.Cog):
 
   @character_group.command(description="Create a character")
   @guild_only()
-  async def add(self, ctx, 
+  async def create(self, ctx, 
     name: str, 
     role: RoleEnum, 
     character_class: Option(ClassEnum, "class"),
@@ -35,8 +37,21 @@ class CharacterCog(commands.Cog):
       
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
-          character = await add_character(sess, user_id, guild_id, name, role, character_class, is_main=is_main)
-          await ctx.respond(f"The new character '{character.name}' was added (main: {character.is_main}).", ephemeral=True)
+          success_msg = "The new character '{name}' was added (main: {is_main})."
+          if SpecEnum.has_spec(character_class, role):
+            
+            # callback for spec button click
+            async def click_callback(spec: SpecEnum):
+              async with self.bot.db_session_class() as sess:
+                async with sess.begin():
+                  character = await add_character(sess, user_id, guild_id, name, role, character_class, spec=spec, is_main=is_main)
+                  return success_msg.format(name=character.name, is_main=character.is_main)
+
+            view = SpecSelectionView(click_callback, character_class, role)
+            await ctx.respond("Pick a spec:", view=view, ephemeral=True)
+          else:
+            character = await add_character(sess, user_id, guild_id, name, role, character_class, is_main=is_main)
+            await ctx.respond(success_msg.format(name=character.name, is_main=character.is_main), ephemeral=True)
   
     except InvalidArgument as e:
       await ctx.respond(f"Cannot add a character: {str(e)}", ephemeral=True)
@@ -111,7 +126,10 @@ class CharacterCog(commands.Cog):
               descriptor +=  c.name
               if c.is_main:
                 descriptor += "**"
-              descriptor += " ({})".format(c.character_class.name_hr)
+              descriptor +=  f" ({c.character_class.name_hr}"
+              if c.spec is not None:
+                descriptor += f" {c.spec.name_hr.lower()}"
+              descriptor += ")"
               formatted.append(descriptor)
             description = os.linesep.join(formatted)
           else:
