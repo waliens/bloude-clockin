@@ -85,6 +85,7 @@ class GuildCharter(Base):
 
   id_guild = Column(String(22), primary_key=True)
   title = Column(String(256), nullable=False)
+  id_sign_channel = Column(String(22), nullable=True)
   id_sign_message = Column(String(22), nullable=True)
   id_sign_role = Column(String(22), nullable=True)
   sign_emoji = Column(String(128), nullable=True)

@@ -51,6 +51,7 @@ class GuildInfoCog(commands.Cog):
         charter = await get_guild_charter(sess, guild_id)
         charter.sign_emoji = sign_emoji
         charter.id_sign_role = str(sign_role.id)
+        charter.id_sign_channel = str(ctx.channel_id)
         embed = GuildCharterEmbed(charter, sign_info=True)
         interaction = await ctx.send(embed=embed)
         charter.id_sign_message = str(interaction.id)
@@ -98,6 +99,14 @@ class GuildInfoCog(commands.Cog):
                 ).values(title=title, content=content)
                 await clbk_sess.execute(query)
                 await interaction.response.send_message(content="Guild charter section updated.", ephemeral=True)
+
+                # edit any existing published charter
+                new_charter = await get_guild_charter(clbk_sess, guild_id)
+                if new_charter.id_sign_message is None:
+                  return
+                channel = await self.bot.fetch_channel(new_charter.id_sign_channel)
+                sign_message = await channel.fetch_message(new_charter.id_sign_message)
+                await sign_message.edit(embed=GuildCharterEmbed(new_charter, sign_info=True))
 
           modal = EmbedFieldEditorModal(
             submit_callback,

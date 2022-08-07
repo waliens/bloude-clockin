@@ -3,6 +3,7 @@
    "id_guild": "1000690135068848158", 
    "title": "<:scroll:1004784665615405106> Charte de guilde <:scroll:1004784665615405106>",
    "id_sign_message": null,
+   "id_sign_channel": null,
    "sign_emoji": null,
    "id_sign_role": null,
    "fields": [
@@ -24,6 +25,7 @@
     "id_guild": "617069087096569896", 
     "title": "<:scroll:1004784665615405106> Charte de guilde <:scroll:1004784665615405106>",
     "id_sign_message": null,
+    "id_sign_channel": null,
     "sign_emoji": null,
     "id_sign_role": null,
     "fields": [
