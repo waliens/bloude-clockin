@@ -119,7 +119,10 @@ class CharacterCog(commands.Cog):
 
   @discord.slash_command(description="List of characters")
   @guild_only()
-  async def characters(self, ctx, for_user: discord.Member = None):
+  async def characters(self, ctx, 
+    for_user: Option(discord.Member, description="Display the list for the selected user (admin only).") = None, 
+    public: Option(bool, description="To display the characters list publicly.") = False
+  ):
     """List all characters in an embed
     """
     try:
@@ -157,7 +160,7 @@ class CharacterCog(commands.Cog):
             description=description
           )
 
-          await ctx.respond(embed=embed)
+          await ctx.respond(embed=embed, ephemeral=not public)
 
     except InvalidArgument as e:
       await ctx.respond(f"Cannot list characters: {str(e)}", ephemeral=True)

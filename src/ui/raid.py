@@ -1,4 +1,3 @@
-import discord
 import datetime
 from discord.ui import View, Select, Button
 from discord import Interaction, InvalidArgument, SelectOption
