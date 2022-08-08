@@ -11,7 +11,7 @@ class GuildCharterEmbed(Embed):
   def __init__(self, charter: GuildCharter, *args, section: int=None, sign_info: bool=False, **kwargs):
     super().__init__(*args, title=charter.title, **kwargs)
 
-    fields = charter.fields
+    fields = sorted(charter.fields, key=lambda f: f.number)
     if section is None and sign_info and charter.sign_emoji is not None:
       self.set_footer(text=f"React with {charter.sign_emoji} to accept the charter.")
     

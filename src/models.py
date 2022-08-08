@@ -83,6 +83,8 @@ class Loot(Base):
 class GuildCharter(Base):
   __tablename__ = "guild_charter"
 
+  TITLE_MAX_SIZE = 256 
+
   id_guild = Column(String(22), primary_key=True)
   title = Column(String(256), nullable=False)
   id_sign_channel = Column(String(22), nullable=True)
@@ -90,7 +92,7 @@ class GuildCharter(Base):
   id_sign_role = Column(String(22), nullable=True)
   sign_emoji = Column(String(128), nullable=True)
 
-  fields = relationship("GuildCharterField", lazy="joined")
+  fields = relationship("GuildCharterField", lazy="joined", back_populates="charter", cascade="all, delete-orphan")
 
   def get_section(self, number):
     filtered = [f for f in self.fields if f.number == number]
@@ -102,8 +104,13 @@ class GuildCharter(Base):
 
 class GuildCharterField(Base):
   __tablename__ = "guild_charter_field"
+  
+  TITLE_MAX_SIZE = 256 
+  CONTENT_MAX_SIZE = 1000  
 
   id_guild = Column(String(22), ForeignKey('guild_charter.id_guild', ondelete="CASCADE"), primary_key=True, )
   number = Column(Integer, primary_key=True)
   title = Column(String(256))
   content = Column(String(1000))
+  
+  charter = relationship("GuildCharter", back_populates="fields")
