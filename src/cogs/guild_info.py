@@ -1,8 +1,5 @@
 
-
-
-import select
-from discord import ApplicationContext, Bot, Embed, Emoji, Guild, Interaction, InvalidArgument, Option, Role, SlashCommandGroup, guild_only, slash_command
+from discord import ApplicationContext, Bot, Embed,Interaction, InvalidArgument, Option, Role, SlashCommandGroup, guild_only
 from discord.ext import commands
 from sqlalchemy import update
 from db_util.charter import get_guild_charter
@@ -58,31 +55,49 @@ class GuildInfoCog(commands.Cog):
         sess.add(charter)
         await sess.commit()
         
+  @charter_group.command(description="Edit charter title. Creates the charter if it does not exist.")
+  @commands.has_permissions(administrator=True)
+  @guild_only()
+  async def edit(self, ctx: ApplicationContext,
+    title: Option(str, description="The charter title")
+  ):
+    try:
+      if len(title) == 0:
+        raise InvalidArgument("title is empty")
 
-  @charter_section_group.command(description="edit a section of the charter")
+      guild_id = str(ctx.guild.id)
+      async with self.bot.db_session_class() as sess:
+        async with sess.begin():
+          charter = await sess.get(GuildCharter, guild_id)
+          if charter is None:
+            charter = GuildCharter(
+              id_guild=guild_id, 
+              title=None, 
+              id_sign_message=None, 
+              id_sign_channel=None, 
+              sign_emoji=None, 
+              id_sign_role=None
+            )
+            sess.add(charter)
+          charter.title = title
+          await sess.commit()
+          await ctx.respond("Title updated.", ephemeral=True)
+          await self._update_published_charter(sess, guild_id, charter=charter)
+    except InvalidArgument as e:
+      await ctx.respond(f"Cannot edit charter title: {str(e)}.", ephemeral=True)
+
+  @charter_section_group.command(description="Edit a section of the charter")
   @commands.has_permissions(administrator=True)
   @guild_only()
   async def update(self, ctx,
-    section: Option(int, description="The number of the section to update") = None,
-    title: Option(str, description="Specify to update the title of the charter") = None
+    section: Option(int, description="The number of the section to update")
   ):
     try:
       guild_id = str(ctx.guild.id)
-      if title is None and section is None:
-        raise InvalidArgument("nothing to update, specify either title or section")
-      if title is not None and not 0 < len(title) <= 256:
-        raise InvalidArgument("title is too short/long")
 
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
           charter = await get_guild_charter(sess, guild_id)
-          if title is not None:
-            charter.title = title
-            await sess.commit()
-
-          if section is None:
-            await ctx.respond("Title updated.", ephemeral=True)
-            return 
 
           if not charter.has_section(section):
             raise InvalidArgument("no such section")
@@ -158,7 +173,7 @@ class GuildInfoCog(commands.Cog):
                 updated_charter.fields.append(GuildCharterField(number=number, title=title, content=content))
 
                 await clbk_sess.commit()
-                await interaction.response.send_message(content="Guild charter section updated.", ephemeral=True)
+                await interaction.response.send_message(content="Guild charter section created.", ephemeral=True)
                 await self._update_published_charter(clbk_sess, guild_id, charter=updated_charter)
 
 
@@ -190,6 +205,7 @@ class GuildInfoCog(commands.Cog):
 
           charter.fields = sorted(charter.fields, key=lambda f: f.number)
           del charter.fields[number - 1]
+          await sess.flush()
           
           for field in charter.fields:
             if field.number > number:
