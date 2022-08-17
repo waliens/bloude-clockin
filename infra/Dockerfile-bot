@@ -14,10 +14,12 @@ ADD src/database.py ./database.py
 ADD src/exceptions.py ./exceptions.py
 ADD src/main.py ./main.py
 ADD src/models.py ./models.py
+ADD src/logging.conf ./logging.conf
 
 ADD src/cogs ./cogs
 ADD src/alembic ./alembic
 ADD src/db_util ./db_util
 ADD src/data ./data
+ADD src/ui ./ui
 
 CMD [ "python3", "main.py" ]
