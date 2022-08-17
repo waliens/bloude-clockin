@@ -64,6 +64,10 @@ async def init_db():
     # load config before for setting up loggin
     alembic_cfg = Config("./alembic.ini")
 
+    versions_folder = "./alembic/versions"
+    if not os.path.exists(versions_folder):
+        os.makedirs(versions_folder)
+
     from models import Base
     database_path = get_db_url()
     engine = create_async_engine(database_path)
