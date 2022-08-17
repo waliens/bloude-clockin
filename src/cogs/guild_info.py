@@ -33,7 +33,7 @@ class GuildInfoCog(commands.Cog):
           embed = GuildCharterEmbed(charter, section=section)
           await ctx.respond(embed=embed, ephemeral=not public)
     except InvalidArgument as e:
-      await ctx.respond(f"Cannot display rules: {str(e)}")
+      await ctx.respond(f"Cannot display rules: {str(e)}", ephemeral=True)
 
   @charter_group.command(description="Publish the charter and enable sign tracking.")
   @commands.has_permissions(administrator=True)
@@ -129,7 +129,7 @@ class GuildInfoCog(commands.Cog):
 
           await ctx.send_modal(modal)
     except InvalidArgument as e:
-      await ctx.respond(f"Cannot display rules: {str(e)}")
+      await ctx.respond(f"Cannot display rules: {str(e)}", ephemeral=True)
     
   @charter_section_group.command(description="Create a charter section. Create charter if it does not exist.")
   @commands.has_permissions(administrator=True)
@@ -186,7 +186,7 @@ class GuildInfoCog(commands.Cog):
 
           await ctx.send_modal(modal)
     except InvalidArgument as e:
-      await ctx.respond(f"Cannot add section: {str(e)}.")
+      await ctx.respond(f"Cannot add section: {str(e)}.", ephemeral=True)
 
   @charter_section_group.command(description="Deletes a section of the charter")
   @commands.has_permissions(administrator=True)
@@ -231,7 +231,8 @@ class GuildInfoCog(commands.Cog):
   @commands.has_permissions(administrator=True)
   @guild_only()
   async def unsigned(self, ctx: ApplicationContext,
-    with_role: Option(Role, description="Only list unsigned people also attributed with this role.") = None
+    with_role: Option(Role, description="Only list unsigned people also attributed with this role.") = None,
+    public: Option(bool, description="To display the list of unsigned people publicly.") = False
   ):
     try:
       async with self.bot.db_session_class() as sess:
@@ -250,10 +251,10 @@ class GuildInfoCog(commands.Cog):
               unsigned_members.append(member)
           
           embed = Embed(title="Unsigned", description="\n".join([f"- <@{m.id}>" for m in unsigned_members]))
-          await ctx.respond(embed=embed)
+          await ctx.respond(embed=embed, ephemeral=not public)
 
     except InvalidArgument as e:
-      await ctx.respond(f"Cannot list unsigned: {str(e)}")
+      await ctx.respond(f"Cannot list unsigned: {str(e)}", ephemeral=True)
 
 
 
