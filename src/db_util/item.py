@@ -2,8 +2,8 @@ import datetime
 
 from discord import InvalidArgument
 import pytz
-from sqlalchemy import insert, or_, select
-from models import Character, Item, Loot
+from sqlalchemy import or_, select
+from models import Item, Loot
 
 from sqlalchemy.exc import NoResultFound, IntegrityError
 

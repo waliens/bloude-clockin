@@ -2,7 +2,6 @@
 import os
 from discord import Intents
 import dotenv
-import asyncio
 import logging
 import logging.config
 from bci import BloudeClockInBot

@@ -1,9 +1,5 @@
-from email.mime import base
-from multiprocessing.sharedctypes import Value
 import re
 from enum import Enum
-
-from discord import Role
 
 
 def enum_names(enum_type):

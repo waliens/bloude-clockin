@@ -1,5 +1,4 @@
 import datetime
-from turtle import pos
 from discord import InvalidArgument
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import NoResultFound

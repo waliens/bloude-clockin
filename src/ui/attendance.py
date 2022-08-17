@@ -1,4 +1,3 @@
-import datetime
 from discord import Embed
 
 from db_util.wow_data import RaidSizeEnum

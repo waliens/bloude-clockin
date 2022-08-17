@@ -1,7 +1,4 @@
 
-
-
-from xml.dom import InvalidAccessErr
 from discord import Embed, InvalidArgument
 
 from models import GuildCharter

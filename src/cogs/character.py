@@ -2,7 +2,7 @@
 import logging
 import os
 import discord
-from discord import InvalidArgument, Option, guild_only, slash_command
+from discord import InvalidArgument, Option, guild_only
 from discord.ext import commands
 from sqlalchemy import select
 

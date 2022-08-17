@@ -1,4 +1,3 @@
-import logging
 from discord import ButtonStyle, Embed, Interaction, InvalidArgument
 from discord.ui import View, Button
 

@@ -1,5 +1,5 @@
 import datetime
-from discord.ui import View, Select, Button
+from discord.ui import View, Button
 from discord import Interaction, InvalidArgument, SelectOption
 from db_util.attendance import record_attendance
 from ui.util import DeferSelect, EnumSelect

@@ -1,6 +1,4 @@
 
-
-import logging
 from discord import InvalidArgument, Option
 from discord.ext import commands
 import discord

@@ -1,13 +1,9 @@
 
-from subprocess import call
 from discord.ui import Button
-from db_util.character import add_character
 
 from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
 from discord import ButtonStyle, Interaction, InvalidArgument
 from discord.ui import View
-
-from models import Character
 
 
 class SpecButton(Button):

@@ -1,6 +1,6 @@
 
 
-from discord import Guild, InvalidArgument
+from discord import InvalidArgument
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 

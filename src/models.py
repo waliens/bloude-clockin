@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, JSON, Boolean, Enum, Integer, Date, DateTime, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, JSON, Boolean, Enum, Integer, DateTime, String, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 

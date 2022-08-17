@@ -1,15 +1,11 @@
 import datetime
 import pytz
-import logging
 import discord
-from discord import InvalidArgument, Option, SelectMenu, guild_only
+from discord import InvalidArgument, Option, guild_only
 from discord.ext import commands
-from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound
 from db_util.attendance import fetch_attendances
 from db_util.character import get_character
 from db_util.raid import get_raids
-from models import Character
 from ui.attendance import CharacterAttendanceEmbed
 from ui.raid import RaidSelectorModal
 
