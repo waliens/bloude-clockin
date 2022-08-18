@@ -304,7 +304,7 @@ class SpecEnum(HumanReadableEnum):
     elif self == self.SHAMAN_SPELLHANCE:
       return "Spellhance"
     elif self == self.WARLOCK_AFFLI:
-      return "Afflication"
+      return "Affliction"
     elif self == self.WARLOCK_DEMONO:
       return "Demonology"
     elif self == self.ROGUE_COMBAT:
