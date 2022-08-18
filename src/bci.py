@@ -1,5 +1,4 @@
 import logging
-import os
 from discord import PartialEmoji, RawReactionActionEvent
 import discord
 from discord.ext import commands
@@ -44,23 +43,16 @@ class BloudeClockInBot(commands.Bot):
     return self._db_session
   
   async def on_ready(self):
-    logging.getLogger().info("Bot `{}` is ready.".format(self.bot_classname))
-
-  async def on_connect(self):
     await self._connect_db()
-    logging.getLogger().info("Bot `{}` is connected.".format(self.bot_classname))
-
-  async def on_disconnect(self):
-    # await self._disconnect_db()
-    logging.getLogger().info("Bot `{}` is disconnected.".format(self.bot_classname))
-
-  async def on_resume(self):
-    await self._connect_db()
-    logging.getLogger().info("Bot `{}` resumed.".format(self.bot_classname))
+    logging.getLogger().info("Database connection: successful")
+    info = await self.application_info()
+    guilds = await self.fetch_guilds().flatten()
+    logging.getLogger().info(f"App info: {info.name} ({info.id}), currently running in {len(guilds)} guild(s)." )
+    logging.getLogger().info("Bot is ready.")
 
   async def _disconnect_db(self):
     await self._do_disconnect_db()
-    logging.getLogger().info("Bot `{}` disconnected from the database.".format(self.bot_classname))
+    logging.getLogger().info("Bot disconnected from the database.")
 
   async def _do_disconnect_db(self):
     if self._db_session is not None:
@@ -76,11 +68,7 @@ class BloudeClockInBot(commands.Bot):
     await self._do_disconnect_db()
     self._db_session_class, self._db_engine = await init_db()
     self._db_session = self._db_session_class()
-    logging.getLogger().info("Bot `{}` successfully connected to the database.".format(self.bot_classname))
-
-  @property
-  def bot_classname(self):
-    return self.__class__.__name__
+    logging.getLogger().info("Bot successfully connected to the database.")
 
   async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
     """Watch for reactions on published charters."""
