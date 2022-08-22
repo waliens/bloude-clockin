@@ -5,6 +5,8 @@ from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum, is_valid_class_role
 from models import Character
 
+from pycord18n.extension import _ as _t
+
 
 def has_character_by_name(models, name):
   return len([c for c in models if c.name.lower() == name.lower()]) > 0
@@ -47,13 +49,12 @@ async def add_character(session, id_user: str, id_guild: str, name: str, role: R
   user_characters = (await session.execute(query)).scalars().all()
 
   if not is_valid_class_role(character_class, role):
-    raise InvalidArgument(f'invalid class/role combination')
-
+    raise InvalidArgument(_t("character.invalid.classrole"))
   if spec is not None and not spec.is_valid_for_class_role(character_class, role):
-    raise InvalidArgument(f"invalid spec for class/role combination")
-  
+    raise InvalidArgument(_t("character.invalid.spec"))
   if len(user_characters) > 0 and has_character_by_name(user_characters, name):
-    raise InvalidArgument(f"such a character '{name}' already exists.")
+    raise InvalidArgument(_t("character.invalid.notunique", name=name))
+
 
   new_character = Character(
     name=name, 
@@ -106,7 +107,7 @@ async def update_character(session, id_user: str, id_guild: str, name: str, new_
   user_characters = (await session.execute(query)).scalars().all()
   
   if len(user_characters) == 0 or not has_character_by_name(user_characters, name):
-    raise InvalidArgument(f"unknown character '{name}'.")
+    raise InvalidArgument(_t("character.invalid.unknown", name=name))
 
   current_character = get_character_by_name(user_characters, name)
 
@@ -115,12 +116,12 @@ async def update_character(session, id_user: str, id_guild: str, name: str, new_
 
   if new_name is not None:
     if has_character_by_name(user_characters, new_name):
-      raise InvalidArgument(f"such a character '{new_name}' already exists.")
+      raise InvalidArgument(_t("character.invalid.notunique", name=new_name))
     current_character.name = new_name
   
   if is_main is not None:
     if not is_main:
-      raise InvalidArgument("to change your main character, select the new main rather than unselect the old one.")
+      raise InvalidArgument(_t("character.invalid.cannotunmain"))
     current_character.is_main = new_name = True
 
   if role is not None:
@@ -130,11 +131,11 @@ async def update_character(session, id_user: str, id_guild: str, name: str, new_
     current_character.character_class = character_class
 
   if not is_valid_class_role(current_character.character_class, current_character.role):
-    raise InvalidArgument(f'invalid class/role combination')
+    raise InvalidArgument(_t("character.invalid.classrole"))
   
   current_spec = current_character.spec
   possible_specs = set(current_character.character_class.get_specs(current_character.role))
-  invalid_spec_message = "invalid spec for this class/role combination"
+  invalid_spec_message = _t("character.invalid.spec")
   if SpecEnum.has_spec(current_character.character_class, current_character.role):
     if spec is not None and spec in possible_specs:
       current_character.spec = spec
@@ -170,11 +171,11 @@ async def delete_character(session, id_user: str, id_guild: str, name: str):
     if character is None:
       return
     elif character.is_main:
-      raise InvalidArgument("cannot delete the main character")
+      raise InvalidArgument(_t("character.invalid.cannotdeletemain"))
     await session.delete(character)
     await session.commit()
   except MultipleResultsFound:
-    raise InvalidArgument("multiple characters found")
+    raise InvalidArgument(_t("character.invalid.multiple"))
 
 
 async def get_character(session, id_guild, id_user, name=None):
@@ -190,4 +191,4 @@ async def get_character(session, id_guild, id_user, name=None):
     results = await session.execute(select(Character).where(*where_clause))
     return results.scalars().one()
   except NoResultFound as e:
-    raise InvalidArgument("character not found")
+    raise InvalidArgument(_t("character.invalid.unknown"))
