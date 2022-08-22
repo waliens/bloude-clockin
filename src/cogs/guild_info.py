@@ -8,6 +8,8 @@ from models import GuildCharter, GuildCharterField
 from ui.guild_info import GuildCharterEmbed
 from ui.util import EmbedFieldEditorModal
 
+from pycord18n.extension import _ as _t
+
 
 class GuildInfoCog(commands.Cog):
   def __init__(self, bot):
@@ -25,7 +27,7 @@ class GuildInfoCog(commands.Cog):
     try:
       guild_id = str(ctx.guild.id)
       if public and not ctx.author.guild_permissions.administrator:
-        raise InvalidArgument("cannot display charter without admin role")
+        raise InvalidArgument(_t("general.invalid.adminrequired"))
 
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
@@ -33,7 +35,7 @@ class GuildInfoCog(commands.Cog):
           embed = GuildCharterEmbed(charter, section=section)
           await ctx.respond(embed=embed, ephemeral=not public)
     except InvalidArgument as e:
-      await ctx.respond(f"Cannot display rules: {str(e)}", ephemeral=True)
+      await ctx.respond(_t("charter.show.error", error=str(e)), ephemeral=True)
 
   @charter_group.command(description="Publish the charter and enable sign tracking.")
   @commands.has_permissions(administrator=True)
@@ -63,7 +65,7 @@ class GuildInfoCog(commands.Cog):
   ):
     try:
       if len(title) == 0:
-        raise InvalidArgument("title is empty")
+        raise InvalidArgument(_t("charter.invalid.titleempty"))
 
       guild_id = str(ctx.guild.id)
       async with self.bot.db_session_class() as sess:
@@ -81,10 +83,10 @@ class GuildInfoCog(commands.Cog):
             sess.add(charter)
           charter.title = title
           await sess.commit()
-          await ctx.respond("Title updated.", ephemeral=True)
+          await ctx.respond(_t("charter.edit.success"), ephemeral=True)
           await self._update_published_charter(sess, guild_id, charter=charter)
     except InvalidArgument as e:
-      await ctx.respond(f"Cannot edit charter title: {str(e)}.", ephemeral=True)
+      await ctx.respond(_t("charter.edit.error", error=str(e)), ephemeral=True)
 
   @charter_section_group.command(description="Edit a section of the charter")
   @commands.has_permissions(administrator=True)
@@ -100,14 +102,14 @@ class GuildInfoCog(commands.Cog):
           charter = await get_guild_charter(sess, guild_id)
 
           if not charter.has_section(section):
-            raise InvalidArgument("no such section")
+            raise InvalidArgument(_t("charter.section.invalid.unknown"))
           section = charter.get_section(section)
 
           async def submit_callback(interaction: Interaction, title: str, content: str):
             if len(content) > GuildCharterField.CONTENT_MAX_SIZE:
-              raise InvalidArgument(f"content is too long (max {GuildCharterField.CONTENT_MAX_SIZE} characters)")
+              raise InvalidArgument(_t("charter.section.invalid.contenttoolong", count=GuildCharterField.CONTENT_MAX_SIZE))
             if len(title) > GuildCharterField.TITLE_MAX_SIZE:
-              raise InvalidArgument(f"title is too long (ma {GuildCharterField.TITLE_MAX_SIZE} characters)")
+              raise InvalidArgument(_t("charter.section.invalid.titletoolong", count=GuildCharterField.TITLE_MAX_SIZE))
             
             async with self.bot.db_session_class() as clbk_sess:
               async with clbk_sess.begin():
@@ -116,20 +118,22 @@ class GuildInfoCog(commands.Cog):
                   GuildCharterField.number == section.number
                 ).values(title=title, content=content)
                 await clbk_sess.execute(query)
-                await interaction.response.send_message(content="Guild charter section updated.", ephemeral=True)
+                await interaction.response.send_message(content=_t("charter.section.update.success"), ephemeral=True)
                 await self._update_published_charter(clbk_sess, guild_id)
 
 
           modal = EmbedFieldEditorModal(
             submit_callback,
-            title=f"Section {(section.number)}", 
+            title=_t("charter.section.modal.title", number=section.number), 
             title_field_value=section.title, 
-            content_field_value=section.content
+            max_title_size=GuildCharterField.TITLE_MAX_SIZE - 4,  # for section number
+            content_field_value=section.content,
+            max_content_size=GuildCharterField.CONTENT_MAX_SIZE
           )
 
           await ctx.send_modal(modal)
     except InvalidArgument as e:
-      await ctx.respond(f"Cannot display rules: {str(e)}", ephemeral=True)
+      await ctx.respond(_t("charter.section.update.error", error=str(e)), ephemeral=True)
     
   @charter_section_group.command(description="Create a charter section. Create charter if it does not exist.")
   @commands.has_permissions(administrator=True)
@@ -145,12 +149,12 @@ class GuildInfoCog(commands.Cog):
           # create charter if necessary
           charter = await sess.get(GuildCharter, guild_id)
           if charter is None:
-            charter = GuildCharter(title="Guild charter", id_guild=guild_id)
+            charter = GuildCharter(title=_t("charter.default.title"), id_guild=guild_id)
             sess.add(charter)
             await sess.commit()
 
           if number is not None and not 1 <= number <= len(charter.fields) + 1:
-            raise InvalidArgument("invalid charter section number")
+            raise InvalidArgument(_t("charter.section.invalid.number"))
           
           if number is None:
             number = len(charter.fields) + 1
@@ -158,9 +162,9 @@ class GuildInfoCog(commands.Cog):
           # post edit modal for user
           async def submit_callback(interaction: Interaction, title: str, content: str):
             if len(content) > GuildCharterField.CONTENT_MAX_SIZE:
-              raise InvalidArgument(f"content is too long (max {GuildCharterField.CONTENT_MAX_SIZE} characters)")
+              raise InvalidArgument(_t("charter.section.invalid.contenttoolong", count=GuildCharterField.CONTENT_MAX_SIZE))
             if len(title) > GuildCharterField.TITLE_MAX_SIZE:
-              raise InvalidArgument(f"title is too long (ma {GuildCharterField.TITLE_MAX_SIZE} characters)")
+              raise InvalidArgument(_t("charter.section.invalid.titletoolong", count=GuildCharterField.TITLE_MAX_SIZE))
 
             async with self.bot.db_session_class() as clbk_sess:
               async with clbk_sess.begin():
@@ -173,20 +177,21 @@ class GuildInfoCog(commands.Cog):
                 updated_charter.fields.append(GuildCharterField(number=number, title=title, content=content))
 
                 await clbk_sess.commit()
-                await interaction.response.send_message(content="Guild charter section created.", ephemeral=True)
+                await interaction.response.send_message(content=_t("charter.section.create.success"), ephemeral=True)
                 await self._update_published_charter(clbk_sess, guild_id, charter=updated_charter)
 
 
           modal = EmbedFieldEditorModal(
             submit_callback,
-            title=f"Section {(number)}", 
+            title=_t("charter.section.modal.title", number=number), 
             title_field_value="", 
+            max_title_size=GuildCharterField.TITLE_MAX_SIZE - 4, # for section number
             content_field_value=""
           )
 
           await ctx.send_modal(modal)
     except InvalidArgument as e:
-      await ctx.respond(f"Cannot add section: {str(e)}.", ephemeral=True)
+      await ctx.respond(_t("charter.section.create.error", error=str(e)), ephemeral=True)
 
   @charter_section_group.command(description="Deletes a section of the charter")
   @commands.has_permissions(administrator=True)
@@ -201,7 +206,7 @@ class GuildInfoCog(commands.Cog):
           charter = await get_guild_charter(sess, guild_id)
 
           if not 1 <= number <= len(charter.fields):
-            raise InvalidArgument("invalid section number")
+            raise InvalidArgument(_t("charter.section.invalid.number"))
 
           charter.fields = sorted(charter.fields, key=lambda f: f.number)
           del charter.fields[number - 1]
@@ -212,10 +217,10 @@ class GuildInfoCog(commands.Cog):
               field.number -= 1
 
           await sess.commit()
-          await ctx.respond("Section successfully deleted.", ephemeral=True)
+          await ctx.respond(_t("charter.section.delete.success"), ephemeral=True)
           await self._update_published_charter(sess, guild_id, charter=charter)  
     except InvalidArgument as e:
-      await ctx.respond(f"Cannot delete section: {str(e)}.", ephemeral=True)
+      await ctx.respond(_t("charter.section.delete.error", error=str(e)), ephemeral=True)
 
   async def _update_published_charter(self, session, guild_id, charter=None):
     # edit any existing published charter
@@ -240,7 +245,7 @@ class GuildInfoCog(commands.Cog):
           charter = await get_guild_charter(sess, str(ctx.guild.id))
 
           if charter.id_sign_message is None:
-            raise InvalidArgument("no charter configured")
+            raise InvalidArgument(_t("charter.invalid.none"))
           
           sign_role = ctx.guild.get_role(int(charter.id_sign_role))
           
@@ -250,11 +255,18 @@ class GuildInfoCog(commands.Cog):
             if member.id not in signed_members and not member.bot:
               unsigned_members.append(member)
           
-          embed = Embed(title="Unsigned", description="\n".join([f"- <@{m.id}>" for m in unsigned_members]))
+          description = "\n".join([f"- <@{m.id}>" for m in unsigned_members])
+          if with_role is not None:
+            description = _t("charter.unsigned.withrole", role_id=with_role.id) + "\n" + description
+          
+          embed = Embed(
+            title=_t("charter.unsigned.title"), 
+            description=description
+          )
           await ctx.respond(embed=embed, ephemeral=not public)
 
     except InvalidArgument as e:
-      await ctx.respond(f"Cannot list unsigned: {str(e)}", ephemeral=True)
+      await ctx.respond(_t("charter.unsigned.error", error=str(e)), ephemeral=True)
 
 
 

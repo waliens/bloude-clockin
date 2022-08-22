@@ -39,9 +39,13 @@ class EmbedFieldEditorModal(Modal):
   def __init__(self, 
     submit_callback, *args, 
     title_field_name="Title", 
-    title_field_value="", 
+    title_field_value="",
+    min_title_size=1,
+    max_title_size=256,
     content_field_name="Content", 
-    content_field_value="", **kwargs
+    content_field_value="",
+    min_content_size=1, 
+    max_content_size=1000, **kwargs
   ) -> None:
     """
     Parameters
@@ -59,8 +63,8 @@ class EmbedFieldEditorModal(Modal):
     self._title_field = InputText(
       label=title_field_name, 
       value=title_field_value, 
-      min_length=1,
-      max_length=256,
+      min_length=min_title_size,
+      max_length=max_title_size,
       style=InputTextStyle.short
     )
     self.add_item(self._title_field)
@@ -69,8 +73,8 @@ class EmbedFieldEditorModal(Modal):
     self._content_field = InputText(
       label=content_field_name, 
       value=content_field_value, 
-      min_length=1,
-      max_length=1000,
+      min_length=min_content_size,
+      max_length=max_content_size,
       style=InputTextStyle.long
     )
     self.add_item(self._content_field)
