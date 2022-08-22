@@ -1,7 +1,9 @@
 
 from discord import Embed, InvalidArgument
+from pycord18n.extension import _ as _t
 
 from models import GuildCharter
+
 
 
 class GuildCharterEmbed(Embed):
@@ -10,13 +12,13 @@ class GuildCharterEmbed(Embed):
 
     fields = sorted(charter.fields, key=lambda f: f.number)
     if section is None and sign_info and charter.sign_emoji is not None:
-      self.set_footer(text=f"React with {charter.sign_emoji} to accept the charter.")
+      self.set_footer(text=_t("charter.show.ui.react", emoji=charter.sign_emoji))
     
     if section is not None:
       if  1 <= section <= len(charter.fields):
         fields = [f for f in charter.fields if f.number == section]
       else:
-        raise InvalidArgument("invalid section number.")     
+        raise InvalidArgument(_t("charter.section.invalid.number"))     
   
     for field in fields:
       self.add_field(name=f"({field.number}) " + field.title, value=field.content, inline=False)
