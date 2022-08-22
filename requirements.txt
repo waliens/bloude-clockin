@@ -16,3 +16,4 @@ python-dotenv==0.20.0
 SQLAlchemy==1.4.39
 SQLAlchemy-Utils==0.38.3
 yarl==1.7.2
+pycordi18n==1.0.3
