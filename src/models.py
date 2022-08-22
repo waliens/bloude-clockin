@@ -9,6 +9,14 @@ from db_util.wow_data import RaidSizeEnum, RoleEnum, ClassEnum, SpecEnum
 Base = declarative_base()
 
 
+class GuildSettings(Base):
+  __tablename__ = "guild_settings"
+  id_guild = Column(String(22), primary_key="True")
+  locale = Column(String(32), default="en")  # locale string
+  timezone = Column(String(256), default="UTC")  # timezone identifier
+
+
+
 class Character(Base):
   __tablename__ = "character"
   id = Column(Integer, primary_key=True)
