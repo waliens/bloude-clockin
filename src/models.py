@@ -16,6 +16,7 @@ class GuildSettings(Base):
   id_guild = Column(String(22), primary_key="True")
   locale = Column(String(32), default=DEFAULT_TZ)  # locale string
   timezone = Column(String(256), default=DEFAULT_LOCALE)  # timezone identifier
+  cheer_message = Column(String(256), nullable=True, default=None)
 
 
 
