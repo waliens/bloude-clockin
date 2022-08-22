@@ -33,10 +33,10 @@ class SettingsCog(commands.Cog):
 
           # update locale
           I18nExtension.default_i18n_instance.set_current_locale(locale)
-          await ctx.respond(_t("settings.locale.update.success", _locale=locale), ephemeral=False)
+          await ctx.respond(_t("settings.locale.update.success", _locale=locale), ephemeral=True)
           
     except InvalidArgument as e:
-      await ctx.respond(_t("settings.locale.update.error", error=str(e)), ephemeral=False)
+      await ctx.respond(_t("settings.locale.update.error", error=str(e)), ephemeral=True)
 
 
 def setup(bot):
