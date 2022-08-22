@@ -5,11 +5,12 @@ RUN pip install python-dotenv
 RUN pip install sqlalchemy[asyncio] sqlalchemy-utils
 RUN pip install alembic asyncpg psycopg2-binary
 RUN pip install python-dateutil pytz
+RUN pip install pycord18n
 
 WORKDIR /bot
 
 ADD src/alembic.ini ./alembic.ini
-ADD src/bci.py ./bci.py
+ADD src/gci.py ./gci.py
 ADD src/database.py ./database.py
 ADD src/exceptions.py ./exceptions.py
 ADD src/main.py ./main.py
@@ -21,5 +22,6 @@ ADD src/alembic ./alembic
 ADD src/db_util ./db_util
 ADD src/data ./data
 ADD src/ui ./ui
+ADD src/locale ./locale
 
 CMD [ "python3", "main.py" ]

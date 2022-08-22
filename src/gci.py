@@ -6,7 +6,7 @@ from sqlalchemy import select
 from database import init_db
 from models import GuildCharter
 
-class BloudeClockInBot(commands.Bot):
+class GuildClockInBot(commands.Bot):
   def __init__(self, *args, **kwargs) -> None:
     super().__init__(*args, **kwargs)
   
@@ -15,7 +15,8 @@ class BloudeClockInBot(commands.Bot):
       "character",
       #"attendance",
       #"loot",
-      "guild_info"
+      "guild_info",
+      "settings"
     ]
 
     for cog_ext in cog_exts:

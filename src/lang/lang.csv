@@ -1,0 +1,4 @@
+key,en,fr
+settings.locale.update.error,"Cannot add/edit locale: {error}","Impossible d'ajouter/éditer la locale: {error}"
+settings.locale.invalid,"invalid locale","locale invalide"
+settings.locale.update.success,"Locale changed to '{_locale}'","Locale mise à jour en '{_locale}'"

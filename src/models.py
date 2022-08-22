@@ -11,9 +11,11 @@ Base = declarative_base()
 
 class GuildSettings(Base):
   __tablename__ = "guild_settings"
+  DEFAULT_TZ = "utc"
+  DEFAULT_LOCALE = "en"
   id_guild = Column(String(22), primary_key="True")
-  locale = Column(String(32), default="en")  # locale string
-  timezone = Column(String(256), default="utc")  # timezone identifier
+  locale = Column(String(32), default=DEFAULT_TZ)  # locale string
+  timezone = Column(String(256), default=DEFAULT_LOCALE)  # timezone identifier
 
 
 
