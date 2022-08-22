@@ -22,6 +22,6 @@ ADD src/alembic ./alembic
 ADD src/db_util ./db_util
 ADD src/data ./data
 ADD src/ui ./ui
-ADD src/locale ./locale
+ADD src/lang ./lang
 
 CMD [ "python3", "main.py" ]
