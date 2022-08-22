@@ -13,7 +13,7 @@ class GuildSettings(Base):
   __tablename__ = "guild_settings"
   id_guild = Column(String(22), primary_key="True")
   locale = Column(String(32), default="en")  # locale string
-  timezone = Column(String(256), default="UTC")  # timezone identifier
+  timezone = Column(String(256), default="utc")  # timezone identifier
 
 
 
