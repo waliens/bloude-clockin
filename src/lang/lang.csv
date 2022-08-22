@@ -1,4 +1,14 @@
 key,en,fr
-settings.locale.update.error,"Cannot add/edit locale: {error}","Impossible d'ajouter/éditer la locale: {error}"
+settings.locale.update.error,"Cannot add/edit locale: {error}.","Impossible d'ajouter/éditer la locale: {error}."
 settings.locale.invalid,"invalid locale","locale invalide"
-settings.locale.update.success,"Locale changed to '{_locale}'","Locale mise à jour en '{_locale}'"
+settings.locale.update.success,"Locale changed to '{_locale}'.","Locale mise à jour en '{_locale}'."
+character.list.title,List of characters,Liste des personnages
+character.list.noneregistered,"No character registered.","Aucun personnage."
+character.list.error,"Cannot list characters: {error}.","Impossible d'afficher les personnages: {error}."
+character.create.success,"The new character '{name}' was added (main: {is_main}).","Le nouveau personnage '{name}' a été ajouté (main: {is_main})."
+character.create.error,"Impossible d'ajouter un personnage: {error}."
+character.update.nothingtochange,"nothing to do, change at least one information of the character","rien à faire, il faut mettre à jour au moins une information du personnage"
+character.update.success,"Update successful, the character is now named '{name}' (main: {is_main}).","Mise à jour réussie, le personnage s'appelle maintenant '{name}' (main: {is_main})."
+character.update.error,"Cannot update the character: {error}.","Impossible de mettre à jour le personnage: {error}."
+character.delete.success,"The character was sucessfully deleted, or did not exist.","Le personnage a été supprimé avec succès, ou n'existait pas."
+character.delete.error,"Cannot delete the character: {error}.","Impossible de supprimer le personnage: {error}."
