@@ -2,7 +2,10 @@ from discord import ButtonStyle, Embed, Interaction, InvalidArgument
 from discord.ui import View, Button
 
 from db_util.item import register_loot
+from lang.util import localized_attr
 from ui.util import CancelButton
+
+from pycord18n.extension import _ as _t
 
 class ItemListEmbed(Embed):
   def __init__(self, items, *args, max_items=-1, **kwargs):
@@ -10,14 +13,19 @@ class ItemListEmbed(Embed):
       self._items = items[:max_items]
     else: 
       self._items = items
-    description = "\n".join([f"`{i+1}` {item.name}" for i, item in enumerate(self._items)])
+    description = "\n".join([self._item_desc(i, item) for i, item in enumerate(self._items)])
     if max_items > 0 and len(items) > max_items:
-      description = f"Too many items, only displaying {max_items}.\n\n" + description
+      description = _t("item.ui.warning.toomany", count=max_items) + "\n\n" + description
     super().__init__(
       *args,
       description=description,
       **kwargs)
 
+  def _item_desc(self, index, item):
+    desc = f"`{index+1}` {localized_attr(item, 'name')}"
+    if item.metadata_["Flags"] & 0x8:
+      desc += " (H)"
+    return desc
 
 class LootSelectionButton(Button):
   def __init__(self, bot, item_nb, item_id, character_id, *args, **kwargs):
@@ -34,10 +42,10 @@ class LootSelectionButton(Button):
           await register_loot(sess, self._item_id, self._character_id)
       self.view.stop()
       self.view.clear_items()
-      await interaction.response.edit_message(content=f"Loot registered.", view=None, embed=None)
+      await interaction.response.edit_message(content=_t("item.add.success"), view=None, embed=None)
     except InvalidArgument as e:
       self.view.enable_all_items()
-      return await interaction.response.edit_message(content=f"Cannot register the loot: {str(e)}.", view=None, embed=None)
+      return await interaction.response.edit_message(content=_t("loot.add.error", error=str(e)), view=None, embed=None)
 
 
 class LootListSelectorView(View):

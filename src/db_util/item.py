@@ -7,6 +7,8 @@ from models import Item, Loot
 
 from sqlalchemy.exc import NoResultFound, IntegrityError
 
+from pycord18n.extension import _ as _t
+
 
 def strcmp_sql_fn(field, query, exact=True):
   if exact:
@@ -16,16 +18,16 @@ def strcmp_sql_fn(field, query, exact=True):
     return field.ilike(f"%{t_query}%")
 
 
-async def items_search(sess, name=None, _id=None, max_items=-1):
+async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1):
   """At least name or id should be provided, otherwise invalid argument error is raised"""
   try:
     if _id is not None:
       id_query = select(Item).where(Item.id == _id)
       id_result = await sess.execute(id_query) 
-      return id_result.scalars().one()
+      return [id_result.scalars().one()]
 
     if name is None:
-      raise InvalidArgument("missing name or id information.")
+      raise InvalidArgument(_t("item.invalid.missing.nameorid"))
  
     # attempt exact match 
     name_fields = [Item.name_en, Item.name_fr]
@@ -48,10 +50,9 @@ async def items_search(sess, name=None, _id=None, max_items=-1):
     if len(loose_items) > 0:
       return loose_items
     
-    raise InvalidArgument("no matching item found.")
-
+    raise InvalidArgument(_t("item.invalid.nomatch"))
   except NoResultFound as e:
-    raise InvalidArgument("no matching item found.")
+    raise InvalidArgument(_t("item.invalid.nomatch"))
 
 
 async def register_loot(sess, item_id, character_id):
@@ -64,4 +65,4 @@ async def register_loot(sess, item_id, character_id):
     sess.add(new_loot)
     await sess.commit()
   except IntegrityError as e:
-    raise InvalidArgument("this loot was already recorded.")
+    raise InvalidArgument(_t("item.invalid.alreadyrecorded"))

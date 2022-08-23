@@ -92,3 +92,11 @@ async def get_db_locale(ctx):
         return None
       else: 
         return settings.locale
+
+
+def localized_attr(obj, attr_name):
+  locale = I18nExtension.default_i18n_instance.get_current_locale()
+  try:
+    return getattr(obj, attr_name + "_" + locale)
+  except AttributeError:
+    return getattr(obj, attr_name)

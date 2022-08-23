@@ -191,4 +191,4 @@ async def get_character(session, id_guild, id_user, name=None):
     results = await session.execute(select(Character).where(*where_clause))
     return results.scalars().one()
   except NoResultFound as e:
-    raise InvalidArgument(_t("character.invalid.unknown"))
+    raise InvalidArgument(_t("character.invalid.unknownornomain"))

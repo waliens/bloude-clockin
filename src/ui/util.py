@@ -1,9 +1,10 @@
 
 
 from abc import abstractmethod
-from csv import excel
 from discord.ui import Button, Select, Modal, InputText
 from discord import ButtonStyle, InputTextStyle, Interaction, InvalidArgument, SelectOption
+
+from pycord18n.extension import _ as _t
 
 
 class DeferSelect(Select):
@@ -28,10 +29,10 @@ class EnumSelect(DeferSelect):
 
 class CancelButton(Button):
   def __init__(self, *args, **kwargs):
-    super().__init__(*args, style=ButtonStyle.danger, label="Cancel", **kwargs)
+    super().__init__(*args, style=ButtonStyle.danger, label=_t("general.cancel"), **kwargs)
 
   async def callback(self, interaction: Interaction):
-    return await interaction.response.edit_message(content="Cancelled.", view=None, embed=None)
+    return await interaction.response.edit_message(content=_t("general.cancelled"), view=None, embed=None)
 
 
 
