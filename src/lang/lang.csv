@@ -49,6 +49,8 @@ item.invalid.missing.nameorid,"missing item name or id","nom ou identifiant d'ob
 item.invalid.nomatch,"no matching item found","impossible de trouver un objet correspondant"
 item.ui.warning.toomany,"Too many items, only displaying {count}.","Trop d'objets, seuls {count} sont affichés."
 loot.add.error,"Cannot register loot: {error}.","Impossible d'enregistrer un loot: {error}." 
+loot.delete.success,"Loot successfully removed, or didn't exist.","Le loot a été enlevé avec succès, ou n'existait pas."
+loot.delete.error,"Cannot remove loot: {error}.","Impossible d'enlever le loot: {error}."
 loot.invalid.missinginfo,"provide an item name or an id","il faut fournir au moins un nom ou un identifiant d'objet"
 loot.invalid.toomuchinfo,"provide either the item name or id, not both","il ne faut fournir qu'un nom ou qu'un identifiant d'objet, pas les deux"
 loot.invalid.toomany,"this item cannot be looted more than {count} time(s)","cet object ne peut pas être looté plus de {count} fois"
