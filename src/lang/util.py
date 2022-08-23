@@ -82,14 +82,14 @@ def build_i18n(directory: str):
 
 async def get_db_locale(ctx):
   if ctx.guild is None:
-    return None
+    return GuildSettings.DEFAULT_LOCALE
   guild_id = str(ctx.guild.id)
 
   async with ctx.bot.db_session_class() as sess:
     async with sess.begin():
       settings = await sess.get(GuildSettings, guild_id)
       if settings is None:
-        return None
+        return GuildSettings.DEFAULT_LOCALE
       else: 
         return settings.locale
 
