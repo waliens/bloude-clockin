@@ -1,5 +1,5 @@
 
-from discord import InvalidArgument, Option
+from discord import InvalidArgument, Option, SlashCommandGroup
 from discord.ext import commands
 import discord
 
@@ -14,15 +14,15 @@ class LootCog(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @discord.slash_command(description="Report a loot you have obtained")
-  async def loot(self, ctx,
+  loot_group = SlashCommandGroup("loot", "A command group for managing loots")
+
+  @loot_group.command(description="Register a loot you have obtained")
+  async def register(self, ctx,
     item_name: str = None,
     item_id: Option(int, name="id") = None,
     char_name: Option(str, name="character") = None,
     for_user: discord.Member = None
   ):
-    """
-    """
     try:
       if item_name is None and item_id is None:
         raise InvalidArgument(_t("loot.invalid.missinginfo"))
