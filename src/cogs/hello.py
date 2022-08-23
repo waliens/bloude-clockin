@@ -14,7 +14,7 @@ class Hello(commands.Cog):
     async with ctx.bot.db_session_class() as sess:
       async with sess.begin():
         settings = await sess.get(GuildSettings, str(ctx.guild.id))
-        if settings.cheer_message is None:
+        if settings is None or settings.cheer_message is None:
           message = _t("settings.cheer.default")
         else:
           message = settings.cheer_message
