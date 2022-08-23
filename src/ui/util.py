@@ -97,9 +97,12 @@ class ListEmbed(Embed):
       self._items = items[:max_items]
     else: 
       self._items = items
-    description = "\n".join([self._item_desc(i, item) for i, item in enumerate(self._items)])
-    if max_items > 0 and len(items) > max_items:
-      description = "*" + _t("general.ui.list.toomany", count=max_items) + "*\n\n" + description
+    if len(self._items) > 0:
+      description = "\n".join([self._item_desc(i, item) for i, item in enumerate(self._items)])
+      if max_items > 0 and len(items) > max_items:
+        description = "*" + _t("general.ui.list.toomany", count=max_items) + "*\n\n" + description
+    else:
+      description = "*" + _t("general.ui.list.empty") + "*"
     super().__init__(
       *args,
       description=description,

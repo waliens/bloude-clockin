@@ -32,8 +32,8 @@ class LootListEmbed(ListEmbed):
     desc += f"{localized_attr(loot.item, 'name')}"
     if loot.item.metadata_["Flags"] & 0x8:
       desc += " (H)"
-
-    desc += f" - {loot.updated_at.strftime('%d/%m/%Y')}"
+    datetime_to_display = loot.updated_at if loot.updated_at is not None else loot.created_at
+    desc += f" - {datetime_to_display.strftime('%d/%m/%Y')}"
     return desc
 
 
