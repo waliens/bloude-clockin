@@ -50,6 +50,7 @@ item.ui.warning.toomany,"Too many items, only displaying {count}.","Trop d'objet
 loot.add.error,"Cannot register loot: {error}.","Impossible d'enregistrer un loot: {error}." 
 loot.invalid.missinginfo,"provide an item name or an id","il faut fournir au moins un nom ou un identifiant d'objet"
 loot.invalid.toomuchinfo,"provide either the item name or id, not both","il ne faut fournir qu'un nom ou qu'un identifiant d'objet, pas les deux"
+loot.invalid.toomany,"this item cannot be looted more than {count} time(s)","cet object ne peut pas être looté plus de {count} fois"
 loot.list.error,"Cannot list loots: {error}.","Impossible de lister les loots: {error}."
 loot.list.ui.loots,"Loots","Loots"
 loot.list.ui.matching,"Matches:","Correspondances:"

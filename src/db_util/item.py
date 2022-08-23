@@ -59,11 +59,16 @@ async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1):
 async def register_loot(sess, item_id, character_id):
   """Register a loot for the given character"""
   try:
-    new_loot = Loot(
-      id_item=item_id, 
-      id_character=character_id, 
-      created_at=datetime.datetime.now(tz=pytz.UTC).replace(tzinfo=None))
-    sess.add(new_loot)
+    loot = await sess.get(Loot, {"id_item": item_id, "id_character": character_id})
+    if loot is None:
+      new_loot = Loot(id_item=item_id, id_character=character_id, count=1)
+      sess.add(new_loot)
+    else:
+      maxcount = int(loot.item.metadata_["maxcount"])
+      if maxcount == 0 or loot.count < maxcount:
+        loot.count += 1
+      else:
+        raise InvalidArgument(_t("loot.invalid.toomany", count=maxcount))
     await sess.commit()
   except IntegrityError as e:
     raise InvalidArgument(_t("item.invalid.alreadyrecorded"))
