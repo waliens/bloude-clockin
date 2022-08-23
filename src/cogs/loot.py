@@ -49,7 +49,8 @@ class LootCog(commands.Cog):
   async def loots(self, ctx,
     slot: Option(InventorySlotEnum, description="An inventory slot") = None,
     char_name: Option(str, name="character") = None,
-    for_user: discord.Member = None
+    for_user: Option(discord.Member) = None,
+    show_ids: Option(bool) = False
   ):
     try:
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
@@ -60,7 +61,7 @@ class LootCog(commands.Cog):
           max_items = 50
           character = await get_character(sess, guild_id, user_id, char_name)
           loots = await fetch_loots(sess, character.id, slot=slot, max_items=max_items + 1)
-          item_list_embed = LootListEmbed(loots, max_items=max_items, title=_t("loot.list.ui.loots"))
+          item_list_embed = LootListEmbed(loots, max_items=max_items, show_ids=show_ids, title=_t("loot.list.ui.loots"))
           await ctx.respond(embed=item_list_embed, ephemeral=True)
 
     except InvalidArgument as e:

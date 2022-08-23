@@ -18,9 +18,16 @@ class ItemListEmbed(ListEmbed):
 
 
 class LootListEmbed(ListEmbed):
+  def __init__(self, *args, show_ids=False, **kwargs):
+    self._show_ids = show_ids 
+    super().__init__(*args, **kwargs)
+
   def _item_desc(self, index, item: Loot):
     loot = item
-    desc = f"`{index+1}` {localized_attr(loot.item, 'name')}"
+    desc = f"`{index+1}` "
+    if self._show_ids:
+      desc += f"`[{loot.item.id}]` "
+    desc += f"{localized_attr(loot.item, 'name')}"
     if loot.item.metadata_["Flags"] & 0x8:
       desc += " (H)"
     desc += f" - {loot.created_at.strftime('%d/%m/%Y')}"
