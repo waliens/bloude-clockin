@@ -1,16 +1,28 @@
 import re
+from abc import abstractmethod
 from enum import Enum
-
+from pycord18n.extension import _ as _t
 
 def enum_names(enum_type):
   return [v.name for v in enum_type]
 
 
-class HumanReadableEnum(Enum): # TODO i18n
+class HumanReadableEnum(Enum):
   @property
-  def name_hr(self):
+  def fallback_name_hr(self):
     return re.sub(r"[\s_]+", " ", self.name).lower().capitalize()
 
+  @property
+  def name_hr(self):
+    if len(self.i18n_prefix) > 0:
+      return _t(f"{self.i18n_prefix}.{self.name}")
+    else:
+      return _t(self.name)
+  
+  @property
+  @abstractmethod
+  def i18n_prefix(self):
+    pass
 
 
 class ItemClassEnum(HumanReadableEnum):
@@ -31,6 +43,10 @@ class ItemClassEnum(HumanReadableEnum):
   PERMANENT = 14
   MISCELLANEOUS = 15
   GLYPH = 16
+
+  @property
+  def i18n_prefix(self):
+    return "wow.item.class"
   
   @property
   def name_hr(self):
@@ -38,7 +54,6 @@ class ItemClassEnum(HumanReadableEnum):
     if self == self.GENERIC or self == self.MONEY or self == self.PERMANENT:
       base_name += " (OBSOLETE)"
     return base_name
-
 
 
 class ItemQualityEnum(HumanReadableEnum):
@@ -52,28 +67,33 @@ class ItemQualityEnum(HumanReadableEnum):
   BIND_TO_ACCOUNT = 7
 
   @property
+  def i18n_prefix(self):
+    return "wow.item.quality"
+
+  @property
   def color(self):
     if self == self.POOR:
-      return "Grey"
+      return _t("color.grey")
     elif self == self.COMMON:
-      return "White"
+      return _t("color.white")
     elif self == self.UNCOMMON:
-      return "Green"
+      return _t("color.green")
     elif self == self.RARE:
-      return "Blue"
+      return _t("color.blue")
     elif self == self.EPIC:
-      return "Purple"
+      return _t("color.purple")
     elif self == self.LEGENDARY:
-      return "Orange"
+      return _t("color.orange")
     elif self == self.ARTIFACT:
-      return "Red"
+      return _t("color.red")
     elif self == self.BIND_TO_ACCOUNT:
-      return "Gold"
+      return _t("color.gold")
     else:
       raise ValueError("unknown quality")
 
 
-class InventorySlotEnum():
+
+class InventorySlotEnum(HumanReadableEnum):
   AMMO = 0	
   HEAD = 1	
   NECK = 2	
@@ -94,6 +114,10 @@ class InventorySlotEnum():
   OFFHAND = 17	
   RANGED = 18	
   TABARD = 19	
+
+  @property
+  def i18n_prefix(self):
+    return "wow.inventory.slot"
   
 
 class ItemInventoryEnum(HumanReadableEnum):
@@ -126,17 +150,10 @@ class ItemInventoryEnum(HumanReadableEnum):
   RANGED_RIGHT = 26
   QUIVER = 27
   RELIC = 28
-
+  
   @property
-  def name_hr(self):
-    base_name = super().name_hr
-    if self == self.RANGED:
-      base_name += " (Bows)"
-    elif self == self.HOLDABLE:
-      base_name += " (Tome)"
-    elif self == self.RANGED_RIGHT:
-      base_name += " (Wands, Guns)"
-    return base_name
+  def i18n_prefix(self):
+    return "wow.inventory.type"
 
   def get_slot(self):
     if self == self.HEAD:
@@ -244,6 +261,10 @@ class StatsEnum(HumanReadableEnum):
   SPELL_PENETRATION = 47
   BLOCK_VALUE = 48
 
+  @property
+  def i18n_prefix(self):
+    return "wow.stat"
+
 
 class RoleEnum(HumanReadableEnum):
   TANK = 1
@@ -260,6 +281,10 @@ class RoleEnum(HumanReadableEnum):
     else: 
       base_name = super().name_hr
     return base_name
+  
+  @property
+  def i18n_prefix(self):
+    return "wow.role"
 
 
 class ClassEnum(HumanReadableEnum):
@@ -288,6 +313,11 @@ class ClassEnum(HumanReadableEnum):
   def get_all_specs_with_class():
     return {(c, s) for c in ClassEnum for s in c.get_specs()}
 
+  @property
+  def i18n_prefix(self):
+    return "wow.class"
+
+
 
 class SpecEnum(HumanReadableEnum):
   SHAMAN_ENHANCE = 1
@@ -298,21 +328,8 @@ class SpecEnum(HumanReadableEnum):
   ROGUE_ASSA = 6
 
   @property
-  def name_hr(self):
-    if self == self.SHAMAN_ENHANCE:
-      return "Enhance"
-    elif self == self.SHAMAN_SPELLHANCE:
-      return "Spellhance"
-    elif self == self.WARLOCK_AFFLI:
-      return "Affliction"
-    elif self == self.WARLOCK_DEMONO:
-      return "Demonology"
-    elif self == self.ROGUE_COMBAT:
-      return "Combat"
-    elif self == self.ROGUE_ASSA:
-      return "Assassination"
-    else:
-      return super().name_hr
+  def i18n_prefix(self):
+    return "wow.class.spec"
 
   @property
   def character_class(self):
@@ -359,6 +376,10 @@ class SpecEnum(HumanReadableEnum):
 class RaidSizeEnum(HumanReadableEnum):
   RAID10 = 1
   RAID25 = 2
+
+  @property
+  def i18n_prefix(self):
+    return "wow.raid.type"
 
 
 def is_valid_class_role(chr_class: ClassEnum, role: RoleEnum):
