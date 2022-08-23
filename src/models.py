@@ -1,3 +1,4 @@
+import pytz
 import datetime
 from sqlalchemy import Column, JSON, Boolean, Enum, Integer, DateTime, String, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
@@ -8,6 +9,10 @@ from sqlalchemy.dialects import postgresql
 from db_util.wow_data import RaidSizeEnum, RoleEnum, ClassEnum, SpecEnum
 
 Base = declarative_base()
+
+
+def utcnow():
+  return datetime.datetime.now(tz=pytz.UTC).replace(tzinfo=None)
 
 
 class GuildSettings(Base):
@@ -31,7 +36,8 @@ class Character(Base):
   role = Column(Enum(RoleEnum))
   spec = Column(Enum(SpecEnum), nullable=True)
   character_class = Column(Enum(ClassEnum))
-  created_at = Column(DateTime)
+  created_at = Column(DateTime, default=utcnow)
+  updated_at = Column(DateTime, onupdate=utcnow)
 
   __table_args__ = (
     UniqueConstraint('id_user', 'name', 'id_guild', name='id_guild_user_name_unique_constraint'),
@@ -61,7 +67,8 @@ class Attendance(Base):
   id = Column(Integer, primary_key=True)
   id_character = Column(Integer, ForeignKey('character.id', ondelete="CASCADE"))
   id_raid = Column(Integer, ForeignKey('raid.id', ondelete="CASCADE"))
-  created_at = Column(DateTime)
+  created_at = Column(DateTime, default=utcnow)
+  updated_at = Column(DateTime, onupdate=utcnow)
   raid_datetime = Column(DateTime)
   raid_size = Column(Enum(RaidSizeEnum))
   cancelled = Column(Boolean)  # if user cancelled his attendance post-registration (on a raid helper for instance)
@@ -86,7 +93,8 @@ class Loot(Base):
   __tablename__ = "loot"
   id_character = Column(Integer, ForeignKey("character.id", ondelete="CASCADE"), primary_key=True)
   id_item = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), primary_key=True)
-  created_at = Column(DateTime)
+  created_at = Column(DateTime, default=utcnow)
+  updated_at = Column(DateTime, onupdate=utcnow)
 
   character = relationship("Character", lazy="joined")
   item = relationship("Item", lazy="joined")
