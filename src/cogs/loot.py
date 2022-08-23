@@ -5,8 +5,9 @@ import discord
 
 from cogs.util import get_applied_user_id
 from db_util.character import get_character
-from db_util.item import items_search
-from ui.item import ItemListEmbed, LootListSelectorView
+from db_util.item import fetch_loots, items_search
+from db_util.wow_data import InventorySlotEnum
+from ui.item import ItemListEmbed, LootListEmbed, LootListSelectorView
 
 from pycord18n.extension import _ as _t
 
@@ -44,6 +45,26 @@ class LootCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(_t("loot.add.error", error=str(e)), ephemeral=True)
 
+  @discord.slash_command(description="List loots for a character.")
+  async def loots(self, ctx,
+    slot: Option(InventorySlotEnum, description="An inventory slot") = None,
+    char_name: Option(str, name="character") = None,
+    for_user: discord.Member = None
+  ):
+    try:
+      user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
+      guild_id = str(ctx.guild_id)
+
+      async with self.bot.db_session_class() as sess:
+        async with sess.begin():
+          max_items = 50
+          character = await get_character(sess, guild_id, user_id, char_name)
+          loots = await fetch_loots(sess, character.id, slot=slot, max_items=max_items + 1)
+          item_list_embed = LootListEmbed(loots, max_items=max_items, title=_t("loot.list.ui.loots"))
+          await ctx.respond(embed=item_list_embed, ephemeral=True)
+
+    except InvalidArgument as e:
+      await ctx.respond(_t("loot.list.error", error=str(e)), ephemeral=True)
 
 def setup(bot):
   bot.add_cog(LootCog(bot))

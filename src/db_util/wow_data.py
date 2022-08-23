@@ -1,7 +1,6 @@
 import re
 from abc import abstractmethod
 from enum import Enum
-from pycord18n.extension import _ as _t
 
 def enum_names(enum_type):
   return [v.name for v in enum_type]
@@ -14,6 +13,7 @@ class HumanReadableEnum(Enum):
 
   @property
   def name_hr(self):
+    from pycord18n.extension import _ as _t
     if len(self.i18n_prefix) > 0:
       return _t(f"{self.i18n_prefix}.{self.name}")
     else:
@@ -119,8 +119,15 @@ class InventorySlotEnum(HumanReadableEnum):
   def i18n_prefix(self):
     return "wow.inventory.slot"
   
+  def get_inventory_types(self):
+    types = list()
+    for _type in ItemInventoryTypeEnum:
+      if _type.get_slot() == self:
+        types.append(_type)
+    return types
 
-class ItemInventoryEnum(HumanReadableEnum):
+
+class ItemInventoryTypeEnum(HumanReadableEnum):
   NON_EQUIPABLE = 0
   HEAD = 1
   NECK = 2

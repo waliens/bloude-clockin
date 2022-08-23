@@ -2,7 +2,8 @@ import datetime
 
 from discord import InvalidArgument
 import pytz
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, Integer
+from db_util.wow_data import InventorySlotEnum
 from models import Item, Loot
 
 from sqlalchemy.exc import NoResultFound, IntegrityError
@@ -66,3 +67,24 @@ async def register_loot(sess, item_id, character_id):
     await sess.commit()
   except IntegrityError as e:
     raise InvalidArgument(_t("item.invalid.alreadyrecorded"))
+
+
+async def fetch_loots(sess, character_id: int, slot: InventorySlotEnum=None, max_items: int=-1):
+  """Fetch loots"""
+  where_clause = [Loot.id_character == character_id]
+  query = select(Loot).order_by(Loot.created_at.desc())
+  
+  # add slot filter
+  if slot is not None:
+    inventory_types = [e.value for e in slot.get_inventory_types()]
+    if len(inventory_types) > 0:
+      where_clause.append(Loot.item.has(Item.metadata_['InventoryType'].astext.cast(Integer).in_(inventory_types)))
+  
+  # limit number of results
+  if max_items > 0:
+    query = query.limit(max_items)
+  
+  query = query.where(*where_clause)
+  
+  result = await sess.execute(query)
+  return result.scalars().all()

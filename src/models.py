@@ -2,6 +2,7 @@ import datetime
 from sqlalchemy import Column, JSON, Boolean, Enum, Integer, DateTime, String, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects import postgresql
 
 
 from db_util.wow_data import RaidSizeEnum, RoleEnum, ClassEnum, SpecEnum
@@ -74,7 +75,7 @@ class Item(Base):
   id = Column(Integer, primary_key=True)
   name_en = Column(String(255))
   name_fr = Column(String(255))
-  metadata_ = Column("metadata", JSON)
+  metadata_ = Column("metadata", postgresql.JSON)
 
   @property
   def name(self):
