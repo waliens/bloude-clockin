@@ -5,7 +5,7 @@ RUN pip install python-dotenv
 RUN pip install sqlalchemy[asyncio] sqlalchemy-utils
 RUN pip install alembic asyncpg psycopg2-binary
 RUN pip install python-dateutil pytz
-RUN pip install pycord18n
+RUN pip install https://github.com/waliens/pycord18n/archive/refs/heads/main.zip
 
 WORKDIR /bot
 
