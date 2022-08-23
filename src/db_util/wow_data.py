@@ -72,6 +72,7 @@ class ItemQualityEnum(HumanReadableEnum):
 
   @property
   def color(self):
+    from pycord18n.extension import _ as _t
     if self == self.POOR:
       return _t("color.grey")
     elif self == self.COMMON:
