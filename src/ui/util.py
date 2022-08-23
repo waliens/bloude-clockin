@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 from discord.ui import Button, Select, Modal, InputText
-from discord import ButtonStyle, InputTextStyle, Interaction, InvalidArgument, SelectOption
+from discord import ButtonStyle, InputTextStyle, Interaction, InvalidArgument, SelectOption, Embed
 
 from pycord18n.extension import _ as _t
 
@@ -88,3 +88,23 @@ class EmbedFieldEditorModal(Modal):
       await self._submit_callback(interaction, self._title_field.value, self._content_field.value)
     except InvalidArgument as e:
       await interaction.response.send_message(content="cannot submit modal", ephemeral=True)
+
+
+
+class ListEmbed(Embed):
+  def __init__(self, items, *args, max_items=-1, **kwargs):
+    if max_items > 0:
+      self._items = items[:max_items]
+    else: 
+      self._items = items
+    description = "\n".join([self._item_desc(i, item) for i, item in enumerate(self._items)])
+    if max_items > 0 and len(items) > max_items:
+      description = "*" + _t("general.ui.list.toomany", count=max_items) + "*\n\n" + description
+    super().__init__(
+      *args,
+      description=description,
+      **kwargs)
+
+  @abstractmethod
+  def _elem_desc(self, index, item):
+    pass

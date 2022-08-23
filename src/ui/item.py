@@ -1,31 +1,32 @@
-from discord import ButtonStyle, Embed, Interaction, InvalidArgument
+from abc import abstractmethod
+from discord import ButtonStyle, Interaction, InvalidArgument
 from discord.ui import View, Button
 
 from db_util.item import register_loot
 from lang.util import localized_attr
-from ui.util import CancelButton
+from models import Item, Loot
+from ui.util import CancelButton, ListEmbed
 
 from pycord18n.extension import _ as _t
 
-class ItemListEmbed(Embed):
-  def __init__(self, items, *args, max_items=-1, **kwargs):
-    if max_items > 0:
-      self._items = items[:max_items]
-    else: 
-      self._items = items
-    description = "\n".join([self._item_desc(i, item) for i, item in enumerate(self._items)])
-    if max_items > 0 and len(items) > max_items:
-      description = _t("item.ui.warning.toomany", count=max_items) + "\n\n" + description
-    super().__init__(
-      *args,
-      description=description,
-      **kwargs)
 
-  def _item_desc(self, index, item):
+class ItemListEmbed(ListEmbed):
+  def _item_desc(self, index, item: Item):
     desc = f"`{index+1}` {localized_attr(item, 'name')}"
     if item.metadata_["Flags"] & 0x8:
       desc += " (H)"
     return desc
+
+
+class LootListEmbed(ListEmbed):
+  def _item_desc(self, index, item: Loot):
+    loot = item
+    desc = f"`{index+1}` {localized_attr(loot.item, 'name')}"
+    if loot.item.metadata_["Flags"] & 0x8:
+      desc += " (H)"
+    desc += f" - {loot.created_at.strftime('%d/%m/%Y')}"
+    return desc
+
 
 class LootSelectionButton(Button):
   def __init__(self, bot, item_nb, item_id, character_id, *args, **kwargs):

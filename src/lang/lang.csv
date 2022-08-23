@@ -31,6 +31,7 @@ charter.edit.error,"Cannot edit title: {error}.","Impossible de mettre le titre 
 general.invalid.adminrequired,"requires admin permissions","nécessite les permissions d'administrateur"
 general.cancel,"Cancel","Annuler"
 general.cancelled,"Cancelled.","Annulé."
+general.ui.list.toomany,"Too many elements, only displaying {count}.","Trop d'éléments, seuls {count} sont affichés."
 charter.section.invalid.unknown,"unknown guild charter section","cette section de la charte de guilde est inconnue"
 charter.section.invalid.titletoolong,"section title is too long (max. {count} character(s))","titre de section trop long (max. {count} caractère(s))"
 charter.section.invalid.contenttoolong,"section content is too long (max. {count} character(s))","section trop longue (max. {count} caractère(s))"
