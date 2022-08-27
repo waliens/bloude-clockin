@@ -1,6 +1,4 @@
-import json
 import os
-import dotenv
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -10,7 +8,7 @@ class SheetStateEnum():
   OK = 1
   UNKNOWN_SHEET = 2
   INVALID_PERMS = 3
-  
+
 
 def get_creds():
   GSHEET_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
