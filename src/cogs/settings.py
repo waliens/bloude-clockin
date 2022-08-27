@@ -1,6 +1,7 @@
 from discord import guild_only, SlashCommandGroup, Option, InvalidArgument
 from discord.ext import commands
 from pycord18n.extension import _ as _t, I18nExtension
+from gsheet_helpers import SheetStateEnum, check_sheet, make_bot_guser_name
 from models import GuildSettings
 
 
@@ -9,7 +10,18 @@ class SettingsCog(commands.Cog):
     self._bot = bot
 
   settings_group = SlashCommandGroup("settings", "Display, update and sign tracking of a guild setting.")
-  
+  gsheet_settings = settings_group.create_subgroup("gsheet", "Gsheet references management.")
+
+  @staticmethod
+  def _default_settings(guild_id):
+    return GuildSettings(
+      id_guild=guild_id, 
+      locale=GuildSettings.DEFAULT_LOCALE, 
+      timezone=GuildSettings.DEFAULT_TZ, 
+      cheer_message=None,
+      id_export_gsheet=None
+    )
+
   @settings_group.command(description="Set/update locale")
   @commands.has_permissions(administrator=True)
   @guild_only()
@@ -25,15 +37,9 @@ class SettingsCog(commands.Cog):
         async with sess.begin():
           settings = await sess.get(GuildSettings, guild_id)
           if settings is None:
-            settings = GuildSettings(
-              id_guild=guild_id, 
-              locale=locale, 
-              timezone=GuildSettings.DEFAULT_TZ, 
-              cheer_message=None
-            )
+            settings = SettingsCog._default_settings(guild_id)
             sess.add(settings)
-          else:
-            settings.locale = locale
+          settings.locale = locale
           await sess.commit()
 
           # update locale
@@ -63,22 +69,49 @@ class SettingsCog(commands.Cog):
         async with sess.begin():
           settings = await sess.get(GuildSettings, guild_id)
           if settings is None:
-            settings = GuildSettings(
-              id_guild=guild_id, 
-              locale=GuildSettings.DEFAULT_LOCALE, 
-              timezone=GuildSettings.DEFAULT_TZ, 
-              cheer_message=message
-            )
+            settings = SettingsCog._default_settings(guild_id)
             sess.add(settings)
-          else:
-            settings.cheer_message = message
+          settings.cheer_message = message
           await sess.commit()
 
           await ctx.respond(_t("settings.cheer.update.success"), ephemeral=True)
           
     except InvalidArgument as e:
       await ctx.respond(_t("settings.cheer.update.error", error=str(e)), ephemeral=True)
-  
+
+  @gsheet_settings.command(description="Register the identifier of a spreadsheet to export.")
+  @commands.has_permissions(administrator=True)
+  @guild_only()
+  async def set(self, ctx,
+    identifier: Option(str, description="The Google sheet identifier.") 
+  ):
+    try:
+      guild_id = str(ctx.guild.id)
+
+      check_status = check_sheet(identifier)
+      if check_status == SheetStateEnum.UNKNOWN_SHEET:
+        raise InvalidArgument(_t("settings.gsheet.notfound"))
+
+      async with ctx.bot.db_session_class() as sess:
+        async with sess.begin():
+          settings = await sess.get(GuildSettings, guild_id)
+          if settings is None:
+            settings = SettingsCog._default_settings(guild_id)
+            sess.add(settings)
+          settings.id_export_gsheet = identifier
+          await sess.commit()
+          if check_status == SheetStateEnum.OK:
+            await ctx.respond(_t("settings.gsheet.identifier.success"), ephemeral=True)
+          else:
+            await ctx.respond(_t("settings.gsheet.identifier.needs.perms", bot_gaccount=make_bot_guser_name()), ephemeral=True)
+    except InvalidArgument as e:
+      await ctx.respond(_t("settings.gsheet.identifier.error", error=str(e)), ephemeral=True)
+
+  @gsheet_settings.command(description="Displays the name of the bot Google account.")
+  @commands.has_permissions(administrator=True)
+  @guild_only()
+  async def account(self, ctx):
+    await ctx.respond(_t("settings.gsheet.google.name", bot_gaccount=make_bot_guser_name()), ephemeral=True)
 
 def setup(bot):
   bot.add_cog(SettingsCog(bot))
