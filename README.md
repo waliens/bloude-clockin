@@ -1,43 +1,59 @@
-# Bloude-ClockIn
+# Guild-ClockIn
 
-## Lister ses personnages
-Permet de renseigner sa liste de personnages et son main, à faire une fois par personnage pour lequel c'est pertinent. 
-Par défaut `@for_user` réfère à utilisateur courant (si pas indiqué à l'appel de la commande). 
-**ADMIN** Seuls les admins peuvent lancer la commande pour d'autres users qu'eux.
+## Help
+
+Help command displaying and explaing available commands. The help will only display admin commands if launched by an admin in private mode. To launch command publicly, use the `public` parameter.
+
 ```
-/character add name role class [@for_user] [is_main]
+/help [public?] 
+```
+
+## Characters management
+
+A set of commands for managing the list of player characters. Only admin can manage characters on behalf of other players (see `@for_user` parameter). A character has a name, a role (e.g. healer, tank), a class (e.g. druid, warrior). Each player can only have on main character.
+```
+/character create name role class [@for_user] [is_main?]
+/character update name [@for_user] [role] [class] [is_main?] [new_name] 
 /character delete name [@for_user] 
-/character update name [@for_user] [role] [class] [is_main] [new_name] 
-/characters [@for_user]
+/characters [@for_user] [public?]
 ```
 
-## Jetons de présence
-À chaque sortie raid "hors-guilde", chaque joueur doit indiquer sa sortie: avec quel personnage (s'il en a renseigné plusieurs, voir ci dessus) et dans quel raid.
-Par défaut, le main de l'utilisateur actuel à l'heure indiquée:
+## Attendance
+
+A set of commands for registering raid attendance. Only admin can manage attendances on behalf of other players (see `@for_user` parameter).
+
+A player can manually register an attendance at a given date. In this case, he can only register attendance once per reset. By default, commands are applied to the current player's main character at the current time.
 ```
 /presence [character] [when] [@for_user]
 ```
 
-Cette requête ouvre un formulaire pour sélectionner le raid.
+Attendance can be extracted from different sources to facilitate raid helpers event or raid composition tool:
+```
+/presence ???
+```
+It should be possible to update the attendance in case of changes. If a player is not in the composition anymore, he should be unregistered. If a player announces he is not available anymore shortly before the raid begins, it should be registered.
 
-**ADMIN** Générer automatiquement des jetons de présence depuis les raid-helpers. En cas d'absence d'un joueur, mettre à jour le raid helper (déplacer le(s) absent(s) vers le rôle d'absence approprié et ajouter le(s) remplaçant(s) en inscrit(s)), ensuite relancer la commande ci dessous qui fera la différence entre les deux versions de l'event. Les joueurs passés d'inscrits à non-inscrits seront marqués comme 'absent dernière minute':
+Attendance to a raid can be extracted from Warcraft logs:
 ```
-/rh-token id-raidhelper
+/presence [logid]
 ```
 
-## Renseigner un loot "hors-guilde"
-La query permettrait de rentrer un nom partiel de l'item et de choisir dans une liste de matches.
+## Loot
+
+A set of commands to register loots. Items can be selected by id. Items that are not unique can be registered several time. 
 ```
-/loot (menu sequence: char? > item (par query ou par id)?)
+/loot register item_id|item_name [character] [@for_user]  
+/loot delete item_id [remove_all?] [character] [@for_user]  
+/loots [character] [@for_user] [slot] [show_ids?]
 ```
 
 ## Administration
-Renseigner les informations de la google sheet
+Set the bot locale for the guild.
 ```
-/gsheetkey ...
+/settings locale en|fr
 ```
 
-Renseigner quels rôles discord sont admin:
+Set the bot cheer message (response to /cheer command):
 ```
-/adminrole roles
+/settings cheer msg
 ```
