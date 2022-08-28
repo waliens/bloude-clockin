@@ -1,6 +1,7 @@
 from discord import guild_only, SlashCommandGroup, Option, InvalidArgument
 from discord.ext import commands
 from pycord18n.extension import _ as _t, I18nExtension
+from db_util.gsheet_export import export_in_worksheets
 from gsheet_helpers import SheetStateEnum, check_sheet, make_bot_guser_name
 from models import GuildSettings
 
@@ -112,6 +113,19 @@ class SettingsCog(commands.Cog):
   @guild_only()
   async def account(self, ctx):
     await ctx.respond(_t("settings.gsheet.google.name", bot_gaccount=make_bot_guser_name()), ephemeral=True)
+
+  @gsheet_settings.command(description="Trigger data export to the Google sheet.")
+  @commands.has_permissions(administrator=True)
+  @guild_only()
+  async def export(self, ctx):
+    try:
+      async with ctx.bot.db_session_class() as sess:
+        async with sess.begin():
+          await ctx.defer(ephemeral=True)
+          await export_in_worksheets(sess, str(ctx.guild.id))
+          await ctx.respond(_t("settings.gsheet.export.success"), ephemeral=True)
+    except InvalidArgument as e:
+      await ctx.respond(_t("settings.gsheet.export.error", error=str(e)), ephemeral=True)
 
 def setup(bot):
   bot.add_cog(SettingsCog(bot))

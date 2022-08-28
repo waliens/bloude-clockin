@@ -96,7 +96,7 @@ class Loot(Base):
   id_item = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), primary_key=True)
   count = Column(Integer, default=1)
   created_at = Column(DateTime, default=utcnow)
-  updated_at = Column(DateTime, onupdate=utcnow)
+  updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
   character = relationship("Character", lazy="joined")
   item = relationship("Item", lazy="joined")

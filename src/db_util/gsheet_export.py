@@ -17,16 +17,15 @@ def create_worksheet(sheet: Spreadsheet, name: str, table) -> Worksheet:
   worksheet: Worksheet
     The resulting worksheet
   """
-  worksheets = sheet.worksheets
+  worksheets = sheet.worksheets()
   try:
-    idx = [wk.name for wk in worksheets].index(name)
+    idx = [wk.title for wk in worksheets].index(name)
     worksheet = worksheets[idx]
     worksheet.clear(fields="*")
   except ValueError:
-    worksheet = sheet.add_worksheet(name, rows=len(table))
+    worksheet = sheet.add_worksheet(name)
 
-  for i, row in enumerate(table):
-    worksheet.update_values((i + 1, 1), row) 
+  worksheet.insert_rows(0, len(table), table) 
 
   return worksheet
 
@@ -63,7 +62,7 @@ async def create_loot_table(sess, guild_id):
   table.append(headers)
 
   # content
-  query = select(Loot).where(Loot.character.id_guild == guild_id)
+  query = select(Loot).where(Loot.character.has(id_guild=guild_id))
   results = await sess.execute(query)
   loots = results.scalars().all()
 
@@ -74,7 +73,7 @@ async def create_loot_table(sess, guild_id):
       loot.item.name_en,
       loot.item.name_fr,
       loot.count,
-      loot.updated_at.strftime('%d/%m/%Y %H:%M'),
+      (loot.created_at if loot.updated_at is None else loot.updated_at).strftime('%d/%m/%Y %H:%M'),
       loot.character.id_user
     ])
   
@@ -84,15 +83,15 @@ async def create_loot_table(sess, guild_id):
 async def export_in_worksheets(sess, guild_id):
   settings = await sess.get(GuildSettings, guild_id)
 
-  if settings is None or settings.id_gsheet_export is None:
+  if settings is None or settings.id_export_gsheet is None:
     raise InvalidArgument(_t("settings.gsheet.invalid.notconfigured"))
 
   gc = pygsheets.authorize(custom_credentials=get_creds())
-  full_sheet = gc.open_by_key(settings.id_gsheet_export)
+  full_sheet = gc.open_by_key(settings.id_export_gsheet)
   
   characters_table = await create_characters_table(sess, guild_id)
   chr_worksheet = create_worksheet(full_sheet, "gci_characters", characters_table)
-  loots_table = await create_characters_table(sess, guild_id)
+  loots_table = await create_loot_table(sess, guild_id)
   lts_worksheet = create_worksheet(full_sheet, "gci_loots", loots_table)
 
   return chr_worksheet, lts_worksheet
