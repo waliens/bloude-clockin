@@ -25,7 +25,8 @@ def create_worksheet(sheet: Spreadsheet, name: str, table) -> Worksheet:
   except ValueError:
     worksheet = sheet.add_worksheet(name)
 
-  worksheet.insert_rows(0, len(table), table) 
+  worksheet.rows = len(table) + 1
+  worksheet.update_values("A1", table) 
 
   return worksheet
 
