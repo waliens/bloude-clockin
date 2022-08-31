@@ -401,3 +401,25 @@ def is_valid_class_role(chr_class: ClassEnum, role: RoleEnum):
     (chr_class == ClassEnum.MAGE and role in {RoleEnum.RANGED_DPS}) or \
     (chr_class == ClassEnum.WARLOCK and role in {RoleEnum.RANGED_DPS}) or \
     (chr_class == ClassEnum.DRUID)
+
+
+# TODO check actual identifiers
+class ProfessionEnum(HumanReadableEnum):
+  LEATHERWORKING = 1
+  TAILORING = 2
+  ENGINEERING = 3
+  BLACKSMITHING = 4
+  COOKING = 5
+  ALCHEMY = 6
+  FIRST_AID = 	7	 
+  ENCHANTING = 8
+  FISHING = 9
+  JEWELCRAFTING = 10
+  INSCRIPTION = 11
+  MINING = 12
+  HERBALISM = 13
+  SKINNING = 14
+
+  @property
+  def i18n_prefix(self):
+    return "wow.profession"

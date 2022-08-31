@@ -1,3 +1,4 @@
+from unicodedata import name
 import pytz
 import datetime
 from sqlalchemy import Column, JSON, Boolean, Enum, Integer, DateTime, String, ForeignKey, UniqueConstraint
@@ -6,7 +7,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects import postgresql
 
 
-from db_util.wow_data import RaidSizeEnum, RoleEnum, ClassEnum, SpecEnum
+from db_util.wow_data import ProfessionEnum, RaidSizeEnum, RoleEnum, ClassEnum, SpecEnum
 
 Base = declarative_base()
 
@@ -87,6 +88,22 @@ class Item(Base):
   @property
   def name(self):
     return self.name_en
+
+
+class Recipe(Base):
+  __tablename__ = "recipe"
+  id = Column(Integer, primary_key=True)
+  name_en = Column(String(255))
+  name_fr = Column(String(255))
+  metadata_ = Column("metadata", postgresql.JSON)
+  profession = Column(Enum(ProfessionEnum))
+
+
+class UserRecipe(Base):
+  __tablename__ = "user_recipe"
+  id_recipe = Column(Integer, ForeignKey('recipe.id', ondelete="CASCADE"), primary_key=True)
+  id_character = Column(Integer, ForeignKey('character.id', ondelete="CASCADE"), primary_key=True)
+  created_at = Column(DateTime, default=utcnow)
 
 
 class Loot(Base):

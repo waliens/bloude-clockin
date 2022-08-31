@@ -3,7 +3,7 @@ from discord.ui import View, Button
 
 from db_util.item import register_loot
 from lang.util import localized_attr
-from models import Item, Loot
+from models import Item, Loot, Recipe
 from ui.util import CancelButton, ListEmbed
 
 from pycord18n.extension import _ as _t
@@ -34,6 +34,21 @@ class LootListEmbed(ListEmbed):
       desc += " (H)"
     datetime_to_display = loot.updated_at if loot.updated_at is not None else loot.created_at
     desc += f" - {datetime_to_display.strftime('%d/%m/%Y')}"
+    return desc
+
+
+class RecipeListEmbed(ListEmbed):
+  def __init__(self, *args, show_ids=False, **kwargs):
+    self._show_ids = show_ids 
+    super().__init__(*args, **kwargs)
+
+  def _item_desc(self, index, item: Recipe):
+    recipe = item
+    desc = f"`{index+1}` "
+    if self._show_ids:
+      desc += f"`[{recipe.id}]` "
+    desc += f"{localized_attr(recipe, 'name')}"
+    desc += f" ({recipe.profession.name_hr.lower()})"
     return desc
 
 

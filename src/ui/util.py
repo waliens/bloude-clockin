@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 from discord.ui import Button, Select, Modal, InputText
-from discord import ButtonStyle, InputTextStyle, Interaction, InvalidArgument, SelectOption, Embed
+from discord import ButtonStyle, InputTextStyle, Interaction, InvalidArgument, SelectOption, Embed, View
 
 from pycord18n.extension import _ as _t
 
@@ -111,3 +111,70 @@ class ListEmbed(Embed):
   @abstractmethod
   def _elem_desc(self, index, item):
     pass
+
+
+class ListSelectionButton(Button):
+  def __init__(self, bot, elem_nb, elem, handle_clbk, success_msg_clbk, error_msg_clbk, *args, **kwargs):
+    """
+    bot: GCIBot
+      The bot
+    elem_nb: int
+      The number to select by clicking the button
+    handle_clbk: coroutine
+      Handles the elem selection. Receives the db session as first argument and the selected element as second.
+    success_msg_clbk: callable
+      Returns the success message
+    error_msg_clbk: callable
+      Returns the error message. Receives the InvalidArgument exception as first argument.
+    """
+    super().__init__(*args, label=f"{elem_nb}", style=ButtonStyle.primary, **kwargs)
+    self._handle_clbk = handle_clbk
+    self._elem = elem
+    self._success_msg_clbk = success_msg_clbk
+    self._error_msg_clbk = error_msg_clbk
+    self._bot = bot
+
+  async def callback(self, interaction: Interaction):
+    try:
+      self.view.disable_all_items()
+      async with self._bot.db_session_class() as sess:
+        async with sess.begin():
+          await self._handle_clbk(sess, self._elem)
+      self.view.stop()
+      self.view.clear_items()
+      await interaction.response.edit_message(content=self._success_msg_clbk(), view=None, embed=None)
+    except InvalidArgument as e:
+      self.view.enable_all_items()
+      return await interaction.response.edit_message(content=self._error_msg_clbk(e), view=None, embed=None)
+
+
+class ListSelectorView(View):
+  def __init__(self, bot, elems, handle_clbk, success_msg_clbk, error_msg_clbk, *args, max_elems=-1, **kwargs):
+    """
+    bot: GCIBot
+    elems: list
+      List of elements to be selected.
+    handle_clbk: coroutine
+      Handles the elem selection. Receives the db session as first argument and the selected element as second.
+    success_msg_clbk: callable
+      Returns the success message
+    error_msg_clbk: callable
+      Returns the error message. Receives the InvalidArgument exception as first argument.
+    max_elems: int
+      Maximum number of elements to display in the selection view.
+
+    """
+    super().__init__(*args, **kwargs)
+    if max_elems > 0:
+      self._items = elems[:max_elems]
+    else: 
+      self._elems = elems
+
+    self._buttons = [
+      ListSelectionButton(bot, i+1, elem, handle_clbk, success_msg_clbk, error_msg_clbk) 
+      for i, elem in enumerate(self._elems)
+    ]
+
+    for button in self._buttons:
+      self.add_item(button)
+    self.add_item(CancelButton())
