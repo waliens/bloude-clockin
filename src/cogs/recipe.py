@@ -10,6 +10,7 @@ from db_util.character import get_character
 from db_util.item import items_search
 from db_util.wow_data import ProfessionEnum
 from models import Recipe
+from ui.item import RecipeListEmbed, RecipeListSelectorView
 
 
 class RecipeCog(commands.Cog):
@@ -27,7 +28,7 @@ class RecipeCog(commands.Cog):
     char_name: Option(str, name="character", description="The character who has the recipe. By default, the main character of the user.") = None,
     for_user: discord.Member = None
   ):
-  #  try:
+    try:
       if item_name is None and item_id is None:
         raise InvalidArgument(_t("recipe.invalid.missinginfo"))
       if item_name is not None and item_id is not None:
@@ -38,10 +39,11 @@ class RecipeCog(commands.Cog):
 
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
-          max_items = 10
+          max_recipes = 10
           character = await get_character(sess, guild_id, user_id, char_name)
-          recipes = await items_search(sess, item_name, item_id, max_items=max_items + 1, model_class=Recipe, filters=[Recipe.profession == profession])
-    #       item_list_embed = RecipeListEmbed(recipes, max_items=max_items, title=_t("recipe.list.ui.matching"))
-    #       item_list_selector_view = RecipeListSelectorView(self.bot, recipes, character.id, max_items=max_items)
-    #       await ctx.respond(embed=item_list_embed, view=item_list_selector_view, ephemeral=True)
-    # except:
+          recipes = await items_search(sess, item_name, item_id, max_items=max_recipes + 1, model_class=Recipe, filters=[Recipe.profession == profession])
+          recipe_list_embed = RecipeListEmbed(recipes, max_items=max_recipes, title=_t("general.ui.list.matching"))
+          reciper_list_selector_view = RecipeListSelectorView(self.bot, recipes, character.id, max_recipes=max_recipes)
+          await ctx.respond(embed=recipe_list_embed, view=reciper_list_selector_view, ephemeral=True)
+    except InvalidArgument as e:
+      await ctx.respond(_t("recipe.add.error", error=str(e)), ephemeral=True)

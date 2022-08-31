@@ -1,8 +1,8 @@
 
 
 from abc import abstractmethod
-from discord.ui import Button, Select, Modal, InputText
-from discord import ButtonStyle, InputTextStyle, Interaction, InvalidArgument, SelectOption, Embed, View
+from discord.ui import Button, Select, Modal, InputText, View
+from discord import ButtonStyle, InputTextStyle, Interaction, InvalidArgument, SelectOption, Embed
 
 from pycord18n.extension import _ as _t
 
@@ -128,8 +128,8 @@ class ListSelectionButton(Button):
       Returns the error message. Receives the InvalidArgument exception as first argument.
     """
     super().__init__(*args, label=f"{elem_nb}", style=ButtonStyle.primary, **kwargs)
-    self._handle_clbk = handle_clbk
     self._elem = elem
+    self._handle_clbk = handle_clbk
     self._success_msg_clbk = success_msg_clbk
     self._error_msg_clbk = error_msg_clbk
     self._bot = bot
@@ -149,20 +149,13 @@ class ListSelectionButton(Button):
 
 
 class ListSelectorView(View):
-  def __init__(self, bot, elems, handle_clbk, success_msg_clbk, error_msg_clbk, *args, max_elems=-1, **kwargs):
+  def __init__(self, bot, elems, *args, max_elems=-1, **kwargs):
     """
     bot: GCIBot
     elems: list
       List of elements to be selected.
-    handle_clbk: coroutine
-      Handles the elem selection. Receives the db session as first argument and the selected element as second.
-    success_msg_clbk: callable
-      Returns the success message
-    error_msg_clbk: callable
-      Returns the error message. Receives the InvalidArgument exception as first argument.
     max_elems: int
       Maximum number of elements to display in the selection view.
-
     """
     super().__init__(*args, **kwargs)
     if max_elems > 0:
@@ -171,10 +164,22 @@ class ListSelectorView(View):
       self._elems = elems
 
     self._buttons = [
-      ListSelectionButton(bot, i+1, elem, handle_clbk, success_msg_clbk, error_msg_clbk) 
+      ListSelectionButton(bot, i+1, elem, self.button_click_callback, self.success_message, self.error_message) 
       for i, elem in enumerate(self._elems)
     ]
 
     for button in self._buttons:
       self.add_item(button)
     self.add_item(CancelButton())
+
+  @abstractmethod
+  async def button_click_callback(self, sess, item):
+    pass
+
+  @abstractmethod
+  def success_message(self):
+    pass
+
+  @abstractmethod
+  def error_message(self, error: InvalidArgument):
+    pass

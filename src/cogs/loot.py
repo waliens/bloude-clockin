@@ -40,7 +40,7 @@ class LootCog(commands.Cog):
           max_items = 10
           character = await get_character(sess, guild_id, user_id, char_name)
           items = await items_search(sess, item_name, item_id, max_items=max_items + 1)
-          item_list_embed = ItemListEmbed(items, max_items=max_items, title=_t("loot.list.ui.matching"))
+          item_list_embed = ItemListEmbed(items, max_items=max_items, title=_t("general.ui.list.matching"))
           item_list_selector_view = LootListSelectorView(self.bot, items, character.id, max_items=max_items)
           await ctx.respond(embed=item_list_embed, view=item_list_selector_view, ephemeral=True)
 
