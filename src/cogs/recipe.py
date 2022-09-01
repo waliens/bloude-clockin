@@ -47,3 +47,7 @@ class RecipeCog(commands.Cog):
           await ctx.respond(embed=recipe_list_embed, view=reciper_list_selector_view, ephemeral=True)
     except InvalidArgument as e:
       await ctx.respond(_t("recipe.add.error", error=str(e)), ephemeral=True)
+
+
+def setup(bot):
+  bot.add_cog(RecipeCog(bot))

@@ -16,7 +16,8 @@ class GuildClockInBot(commands.Bot):
       #"attendance",
       "loot",
       "guild_info",
-      "settings"
+      "settings",
+      "recipe"
     ]
 
     for cog_ext in cog_exts:
