@@ -159,7 +159,7 @@ class ListSelectorView(View):
     """
     super().__init__(*args, **kwargs)
     if max_elems > 0:
-      self._items = elems[:max_elems]
+      self._elems = elems[:max_elems]
     else: 
       self._elems = elems
 

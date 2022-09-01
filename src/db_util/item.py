@@ -4,7 +4,7 @@ from discord import InvalidArgument
 import pytz
 from sqlalchemy import or_, select, Integer
 from db_util.wow_data import InventorySlotEnum
-from models import Item, Loot, Recipe
+from models import Item, Loot, Recipe, UserRecipe
 
 from sqlalchemy.exc import NoResultFound, IntegrityError
 
@@ -35,7 +35,7 @@ async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1, m
     exact_where_clause = [or_(*[strcmp_sql_fn(f, name) for f in name_fields])]
     if len(filters) > 0:
       exact_where_clause.extend(filters)
-    exact_match_query = select(model_class).where(exact_where_clause).order_by(model_class.id)
+    exact_match_query = select(model_class).where(*exact_where_clause).order_by(model_class.id)
     if max_items > 0:
       exact_match_query = exact_match_query.limit(max_items)
     exact_results = await sess.execute(exact_match_query)
@@ -48,7 +48,7 @@ async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1, m
     loose_where_clause = [or_(*[strcmp_sql_fn(f, name, exact=False) for f in name_fields])]
     if len(filters) > 0:
       loose_where_clause.extend(filters)
-    loose_match_query = select(model_class).where(loose_where_clause).order_by(model_class.id)
+    loose_match_query = select(model_class).where(*loose_where_clause).order_by(model_class.id)
     if max_items > 0:
       loose_match_query = loose_match_query.limit(max_items)
     loose_results = await sess.execute(loose_match_query)
@@ -83,7 +83,7 @@ async def register_loot(sess, item_id, character_id):
 async def register_recipe(sess, recipe_id, character_id):
   """Register a recipe for the given character"""
   try:
-    new_recipe = Recipe(id_recipe=recipe_id, id_character=character_id)
+    new_recipe = UserRecipe(id_recipe=recipe_id, id_character=character_id)
     sess.add(new_recipe)
     await sess.commit()
   except IntegrityError:
