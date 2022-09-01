@@ -142,10 +142,10 @@ class ListSelectionButton(Button):
           await self._handle_clbk(sess, self._elem)
       self.view.stop()
       self.view.clear_items()
-      await interaction.response.edit_message(content=self._success_msg_clbk(), view=None, embed=None)
+      await interaction.response.edit_message(**self._success_msg_clbk())
     except InvalidArgument as e:
       self.view.enable_all_items()
-      return await interaction.response.edit_message(content=self._error_msg_clbk(e), view=None, embed=None)
+      return await interaction.response.edit_message(**self._error_msg_clbk(e))
 
 
 class ListSelectorView(View):

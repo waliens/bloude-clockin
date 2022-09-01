@@ -1,7 +1,6 @@
-import datetime
+from collections import defaultdict
 
 from discord import InvalidArgument
-import pytz
 from sqlalchemy import or_, select, Integer
 from db_util.wow_data import InventorySlotEnum
 from models import Item, Loot, Recipe, UserRecipe
@@ -109,3 +108,22 @@ async def fetch_loots(sess, character_id: int, slot: InventorySlotEnum=None, max
   
   result = await sess.execute(query)
   return result.scalars().all()
+
+
+async def get_crafters(sess, recipe_ids):
+  # get recipes
+  recipes_query = select(Recipe).where(Recipe.id.in_(recipe_ids))
+  recipes_result = await sess.execute(recipes_query)
+  recipes = recipes_result.scalars().all()
+
+  # get user recipes
+  query = select(UserRecipe).where(UserRecipe.id_recipe.in_(recipe_ids))
+  result = await sess.execute(query)
+  user_recipes = result.scalars().all()
+
+  # structure as a list of tuples
+  recipe_characters = defaultdict(list)
+  for user_recipe in user_recipes:
+    recipe_characters[user_recipe.id_recipe].append(user_recipe.character)
+  
+  return [(recipe, recipe_characters[recipe.id]) for recipe in recipes]

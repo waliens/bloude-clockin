@@ -105,6 +105,9 @@ class UserRecipe(Base):
   id_character = Column(Integer, ForeignKey('character.id', ondelete="CASCADE"), primary_key=True)
   created_at = Column(DateTime, default=utcnow)
 
+  character = relationship("Character", lazy="joined")
+  recipe = relationship("Recipe", lazy="joined")
+
 
 class Loot(Base):
   __tablename__ = "loot"
@@ -115,7 +118,7 @@ class Loot(Base):
   updated_at = Column(DateTime, onupdate=utcnow)
 
   character = relationship("Character", lazy="joined")
-  item = relationship("Item", lazy="joined")
+  item = relationship("Item", lazy="joined") 
 
 
 class GuildCharter(Base):

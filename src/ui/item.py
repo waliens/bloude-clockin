@@ -1,10 +1,11 @@
-from discord import ButtonStyle, Interaction, InvalidArgument
+from discord import ButtonStyle, Interaction, InvalidArgument, Embed
 from discord.ui import View, Button
 
-from db_util.item import register_loot, register_recipe
+from db_util.item import get_crafters, register_loot, register_recipe
+from db_util.wow_data import ProfessionEnum
 from lang.util import localized_attr
 from models import Item, Loot, Recipe
-from ui.util import CancelButton, ListEmbed, ListSelectorView
+from ui.util import ListEmbed, ListSelectorView
 
 from pycord18n.extension import _ as _t
 
@@ -61,13 +62,13 @@ class LootListSelectorView(ListSelectorView):
     await register_loot(sess, elem.id, self._character_id)
 
   def success_message(self):
-    return _t("item.add.success")
+    return {"content": _t("item.add.success"), "embed": None, "view": None}
 
   def error_message(self, error: InvalidArgument):
-    return _t("loot.add.error", error=str(error))
+    return {"content": _t("loot.add.error", error=str(error)), "embed": None, "view": None}
 
 
-class RecipeListSelectorView(ListSelectorView):
+class RecipeRegistrationListSelectorView(ListSelectorView):
   def __init__(self, bot, recipes, character_id, *args, max_recipes=-1, **kwargs):
     super().__init__(bot, recipes, *args, max_elems=max_recipes, **kwargs)
     self._character_id = character_id
@@ -76,8 +77,97 @@ class RecipeListSelectorView(ListSelectorView):
     await register_recipe(sess, elem.id, self._character_id)
 
   def success_message(self):
-    return _t("recipe.add.success")
+    return {"content": _t("recipe.add.success"), "embed": None, "view": None}
 
   def error_message(self, error: InvalidArgument):
-    return _t("recipe.add.error", error=str(error))
+    return {"content": _t("recipe.add.error", error=str(error)), "embed": None, "view": None}
+
+
+class RecipeRegistrationListSelectorView(ListSelectorView):
+  def __init__(self, bot, recipes, character_id, *args, max_recipes=-1, **kwargs):
+    super().__init__(bot, recipes, *args, max_elems=max_recipes, **kwargs)
+    self._character_id = character_id
+  
+  async def button_click_callback(self, sess, recipe):
+    await register_recipe(sess, recipe.id, self._character_id)
+
+  def success_message(self):
+    return {"content": _t("recipe.add.success"), "embed": None, "view": None}
+
+  def error_message(self, error: InvalidArgument):
+    return {"content": _t("recipe.add.error", error=str(error)), "embed": None, "view": None}
+
+
+def profession_emoji(profession: ProfessionEnum):
+  return {
+    ProfessionEnum.LEATHERWORKING: ":mans_shoe:",
+    ProfessionEnum.TAILORING: ":sewing_needle:",
+    ProfessionEnum.ENGINEERING: ":wrench:",
+    ProfessionEnum.BLACKSMITHING: ":hammer:",
+    ProfessionEnum.COOKING: ":fondue:",
+    ProfessionEnum.ALCHEMY: ":alembic:",
+    ProfessionEnum.FIRST_AID: ":adhesive_bandage:",
+    ProfessionEnum.ENCHANTING: ":magic_hand:",
+    ProfessionEnum.FISHING: ":fish:",
+    ProfessionEnum.JEWELCRAFTING: ":ring:",
+    ProfessionEnum.INSCRIPTION: ":scroll:",
+    ProfessionEnum.MINING: ":pick:",
+    ProfessionEnum.HERBALISM: ":herb:",
+    ProfessionEnum.SKINNING: ":beaver:"
+  }.get(profession, "?")
+
+
+
+class RecipeCraftersEmbed(Embed):
+  def __init__(self, crafters, *args, show_ids=False, max_crafters_per_recipe=10, **kwargs):
+    super().__init__(*args, title=_t("recipe.crafters.embed.title"), **kwargs)
+    self._crafters = crafters
+    self._max_crafters_per_recipe = max_crafters_per_recipe
+    self._show_ids = show_ids
+
+    for recipe, characters in self._crafters: 
+      self.add_field(**self._get_field_data(recipe, characters))    
+
+  def _get_field_data(self, recipe, characters):
+    name = ""
+    if self._show_ids:
+      name += f"`[{recipe.id}]` "
+    name += localized_attr(recipe, "name")
+    name += f"  {profession_emoji(recipe.profession)}"
+
+    if len(characters) == 0:
+      value = _t("recipe.crafters.embed.field.no_crafter")
+    else:
+      # filter characters (one per user, preferably the main )
+      actual_characters = dict()
+      for character in characters:
+        if character.id in actual_characters and not character.is_main:
+          continue
+        actual_characters[character.id] = character
+    
+      # generate text
+      # value = _t("recipe.crafters.embed.field.crafters_count", count=len(characters)) + "\n"
+      value = "\n".join([f"- {character.name} <@{character.id_user}>" for character in list(actual_characters.values())[:self._max_crafters_per_recipe]]) 
+
+    return  {"inline": False, "name": name, "value": value}
+
+
+class RecipeCraftersListSelectorView(ListSelectorView):
+  def __init__(self, bot, recipes, *args, show_ids=False, max_recipes=-1, **kwargs):
+    super().__init__(bot, recipes, *args, max_elems=max_recipes, **kwargs)
+    self._show_ids = show_ids
+    self._crafters = []
+
+  async def button_click_callback(self, sess, recipe):
+    self._crafters = await get_crafters(sess, [recipe.id])
+
+  def success_message(self):
+    embed = RecipeCraftersEmbed(self._crafters, show_ids=self._show_ids)
+    return {"embed": embed, "view": None, "content": None}
+
+  def error_message(self, error: InvalidArgument):
+    return {"content": _t("recipe.add.error", error=str(error)), "embed": None, "view": None}
+
+
+
 
