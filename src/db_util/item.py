@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from discord import InvalidArgument
 from sqlalchemy import or_, select, Integer
+from db_util.character import get_character
 from db_util.wow_data import InventorySlotEnum
 from models import Item, Loot, Recipe, UserRecipe
 
@@ -79,12 +80,16 @@ async def register_loot(sess, item_id, character_id):
     raise InvalidArgument(_t("item.invalid.alreadyrecorded"))
 
 
-async def register_recipe(sess, recipe_id, character_id):
+async def register_user_recipes(sess, recipe_ids, character_id):
   """Register a recipe for the given character"""
   try:
-    new_recipe = UserRecipe(id_recipe=recipe_id, id_character=character_id)
-    sess.add(new_recipe)
+    new_recipes = [
+      UserRecipe(id_recipe=recipe_id, id_character=character_id)
+      for recipe_id in recipe_ids
+    ]
+    sess.add_all(new_recipes)
     await sess.commit()
+    return new_recipes
   except IntegrityError:
     raise InvalidArgument(_t("recipe.invalid.alreadyrecorded"))
 
@@ -112,9 +117,7 @@ async def fetch_loots(sess, character_id: int, slot: InventorySlotEnum=None, max
 
 async def get_crafters(sess, recipe_ids):
   # get recipes
-  recipes_query = select(Recipe).where(Recipe.id.in_(recipe_ids))
-  recipes_result = await sess.execute(recipes_query)
-  recipes = recipes_result.scalars().all()
+  recipes = await get_recipes(sess, recipe_ids)
 
   # get user recipes
   query = select(UserRecipe).where(UserRecipe.id_recipe.in_(recipe_ids))
@@ -127,3 +130,22 @@ async def get_crafters(sess, recipe_ids):
     recipe_characters[user_recipe.id_recipe].append(user_recipe.character)
   
   return [(recipe, recipe_characters[recipe.id]) for recipe in recipes]
+
+
+async def get_recipes(sess, recipe_ids):
+  recipes_query = select(Recipe).where(Recipe.id.in_(recipe_ids))
+  recipes_result = await sess.execute(recipes_query)
+  return recipes_result.scalars().all()
+
+
+async def get_character_recipes(sess, id_guild, character_name, user_id, profession=None):
+  # extract the character
+  character = await get_character(sess, id_guild, id_user=user_id, name=character_name)
+
+  # query recipes
+  where_clause = [UserRecipe.character.has(id=character.id)]
+  if profession is not None:
+    where_clause.append(UserRecipe.recipe.has(profession=profession))
+  query = select(UserRecipe).where(*where_clause)
+  results = await sess.execute(query)
+  return results.scalars().all()

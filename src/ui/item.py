@@ -1,11 +1,11 @@
 from discord import ButtonStyle, Interaction, InvalidArgument, Embed
 from discord.ui import View, Button
 
-from db_util.item import get_crafters, register_loot, register_recipe
+from db_util.item import get_crafters, register_loot, register_user_recipes
 from db_util.wow_data import ProfessionEnum
 from lang.util import localized_attr
-from models import Item, Loot, Recipe
-from ui.util import ListEmbed, ListSelectorView
+from models import GuildCharterField, Item, Loot, Recipe
+from ui.util import EMBED_DESCRIPTION_MAX_LENGTH, EMBED_FIELD_VALUE_MAX_LENGTH, ListEmbed, ListSelectorView
 
 from pycord18n.extension import _ as _t
 
@@ -53,6 +53,95 @@ class RecipeListEmbed(ListEmbed):
     return desc
 
 
+def get_profession_emoji(profession: ProfessionEnum):
+  return {
+    ProfessionEnum.LEATHERWORKING: ":mans_shoe:",
+    ProfessionEnum.TAILORING: ":sewing_needle:",
+    ProfessionEnum.ENGINEERING: ":wrench:",
+    ProfessionEnum.BLACKSMITHING: ":hammer:",
+    ProfessionEnum.COOKING: ":fondue:",
+    ProfessionEnum.ALCHEMY: ":alembic:",
+    ProfessionEnum.FIRST_AID: ":adhesive_bandage:",
+    ProfessionEnum.ENCHANTING: ":magic_hand:",
+    ProfessionEnum.FISHING: ":fish:",
+    ProfessionEnum.JEWELCRAFTING: ":ring:",
+    ProfessionEnum.INSCRIPTION: ":scroll:",
+    ProfessionEnum.MINING: ":pick:",
+    ProfessionEnum.HERBALISM: ":herb:",
+    ProfessionEnum.SKINNING: ":beaver:"
+  }.get(profession, "?")
+
+
+class UserRecipeEmbed(Embed):
+  ETC_DESC = "- ..."
+
+  def __init__(self, character, user_recipes, *args, one_profession: ProfessionEnum=None, show_ids=False, show_dates=False, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._show_ids = show_ids
+    self._show_dates = show_dates
+    self._one_profession = one_profession
+
+    if self._one_profession is None:
+      self.title = _t("recipe.recipes")
+      self.description = _t("recipe.ui.user_recipe.embed.description", char_name=character.name, id_user=character.id_user)
+      for profession in {ur.recipe.profession for ur in user_recipes}:
+        self.add_field(**self._get_profession_field(profession, user_recipes))
+    else:
+      self.title = _t("recipe.ui.user_recipe.embed.title.one_prof", 
+        emoji=get_profession_emoji(self._one_profession), 
+        prof_name=self._one_profession.name_hr, 
+        char_name=character.name
+      )
+      self.description = f"<@{character.id_user}>\n" + self._get_all_recipes_list(user_recipes)
+
+  def _get_all_recipes_list(self, user_recipes):
+    if len(user_recipes) == 0:
+      return _t("recipe.ui.user_recipe.embed.no_recipe")
+    recipe_descriptors = list()
+    for ur in user_recipes:
+      desc = self._get_user_recipe_descriptor(ur)
+      # check if going over field content size limit
+      curr_field_size = sum(map(len, recipe_descriptors)) + len(recipe_descriptors) 
+      if curr_field_size + len(desc) < EMBED_DESCRIPTION_MAX_LENGTH - len(self.ETC_DESC):
+        recipe_descriptors.append(desc)
+      else:
+        recipe_descriptors.append(self.ETC_DESC)
+        break
+    return "\n".join(recipe_descriptors)
+  
+  def _get_profession_field(self, profession: ProfessionEnum, user_recipes):
+    filtered = [ur for ur in user_recipes if ur.recipe.profession == profession]
+    name = f"{profession.name_hr} {get_profession_emoji(profession)}"
+
+    recipe_descriptors = list()
+    for ur in filtered:
+      desc = self._get_user_recipe_descriptor(ur)
+      # check if going over field content size limit
+      curr_field_size = sum(map(len, recipe_descriptors)) + len(recipe_descriptors) 
+      if curr_field_size + len(desc) < EMBED_FIELD_VALUE_MAX_LENGTH - len(self.ETC_DESC):
+        recipe_descriptors.append(desc)
+      else:
+        recipe_descriptors.append(self.ETC_DESC)
+        break
+    
+    if len(filtered) == 0:
+      value = _t("recipe.ui.user_recipe.embed.no_recipe")
+    else:
+      value = "\n".join(recipe_descriptors)
+
+    return {"name": name, "value": value, "inline": False}
+
+  def _get_user_recipe_descriptor(self, user_recipe):
+    desc = ""
+    if self._show_ids:
+      desc = f"`[{user_recipe.recipe.id}]` "
+    else:
+      desc = "- "
+    desc += f"{localized_attr(user_recipe.recipe, 'name')}"
+    if self._show_dates:
+      desc += f" ({user_recipe.created_at.strftime('%d/%m/%Y')})"
+    return desc
+
 class LootListSelectorView(ListSelectorView):
   def __init__(self, bot, items, character_id, *args, max_items=-1, **kwargs):
     super().__init__(bot, items, *args, max_elems=max_items, **kwargs)
@@ -74,7 +163,7 @@ class RecipeRegistrationListSelectorView(ListSelectorView):
     self._character_id = character_id
   
   async def button_click_callback(self, sess, elem):
-    await register_recipe(sess, elem.id, self._character_id)
+    await register_user_recipes(sess, [elem.id], self._character_id)
 
   def success_message(self):
     return {"content": _t("recipe.add.success"), "embed": None, "view": None}
@@ -89,33 +178,13 @@ class RecipeRegistrationListSelectorView(ListSelectorView):
     self._character_id = character_id
   
   async def button_click_callback(self, sess, recipe):
-    await register_recipe(sess, recipe.id, self._character_id)
+    await register_user_recipes(sess, [recipe.id], self._character_id)
 
   def success_message(self):
     return {"content": _t("recipe.add.success"), "embed": None, "view": None}
 
   def error_message(self, error: InvalidArgument):
     return {"content": _t("recipe.add.error", error=str(error)), "embed": None, "view": None}
-
-
-def profession_emoji(profession: ProfessionEnum):
-  return {
-    ProfessionEnum.LEATHERWORKING: ":mans_shoe:",
-    ProfessionEnum.TAILORING: ":sewing_needle:",
-    ProfessionEnum.ENGINEERING: ":wrench:",
-    ProfessionEnum.BLACKSMITHING: ":hammer:",
-    ProfessionEnum.COOKING: ":fondue:",
-    ProfessionEnum.ALCHEMY: ":alembic:",
-    ProfessionEnum.FIRST_AID: ":adhesive_bandage:",
-    ProfessionEnum.ENCHANTING: ":magic_hand:",
-    ProfessionEnum.FISHING: ":fish:",
-    ProfessionEnum.JEWELCRAFTING: ":ring:",
-    ProfessionEnum.INSCRIPTION: ":scroll:",
-    ProfessionEnum.MINING: ":pick:",
-    ProfessionEnum.HERBALISM: ":herb:",
-    ProfessionEnum.SKINNING: ":beaver:"
-  }.get(profession, "?")
-
 
 
 class RecipeCraftersEmbed(Embed):
@@ -133,7 +202,7 @@ class RecipeCraftersEmbed(Embed):
     if self._show_ids:
       name += f"`[{recipe.id}]` "
     name += localized_attr(recipe, "name")
-    name += f"  {profession_emoji(recipe.profession)}"
+    name += f" {get_profession_emoji(recipe.profession)}"
 
     if len(characters) == 0:
       value = _t("recipe.crafters.embed.field.no_crafter")

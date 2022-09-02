@@ -6,6 +6,10 @@ from discord import ButtonStyle, InputTextStyle, Interaction, InvalidArgument, S
 
 from pycord18n.extension import _ as _t
 
+EMBED_FIELD_NAME_MAX_LENGTH = 256
+EMBED_FIELD_VALUE_MAX_LENGTH = 1024
+EMBED_DESCRIPTION_MAX_LENGTH = 4096
+
 
 class DeferSelect(Select):
   def __init__(self, data, *args, **kwargs):
