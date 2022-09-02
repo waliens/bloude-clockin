@@ -33,7 +33,7 @@ async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1, m
     # attempt exact match 
     name_fields = [model_class.name_en, model_class.name_fr]
     exact_where_clause = [or_(*[strcmp_sql_fn(f, name) for f in name_fields])]
-    if len(filters) > 0:
+    if filters is not None:
       exact_where_clause.extend(filters)
     exact_match_query = select(model_class).where(*exact_where_clause).order_by(model_class.id)
     if max_items > 0:

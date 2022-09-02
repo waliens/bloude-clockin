@@ -20,7 +20,7 @@ character.update.success,"Update successful, the character is now named '{name}'
 charter.default.title,"Guild charter","Charte de guilde"
 charter.edit.error,"Cannot edit title: {error}.","Impossible de mettre le titre à jour: {error}."
 charter.edit.success,"Title successfully updated.","Titre mis à jour avec succès."
-charter.invalid.none,"No charter registered","Pas de charte enregistrée."
+charter.invalid.none,"no charter registered","pas de charte enregistrée"
 charter.invalid.titleempty,"title is empty","titre vide"
 charter.section.create.error,"Cannot add charter section: {error}","Impossible d'ajouter cette section à la charte: {error}."
 charter.section.create.success,"Guild charter section successfully created.","La section de la charte de guilde a été créée avec succès."

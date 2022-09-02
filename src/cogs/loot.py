@@ -47,6 +47,7 @@ class LootCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(_t("loot.add.error", error=str(e)), ephemeral=True)
 
+
   @loot_group.command(description="Remove one item from your loot list")
   async def remove(self, ctx,
     item_id: Option(int, name="id"),
@@ -74,7 +75,6 @@ class LootCog(commands.Cog):
 
     except InvalidArgument as e:
       await ctx.respond(_t("loot.delete.error", error=str(e)), ephemeral=True)
-
 
 
   @discord.slash_command(description="List loots for a character.")
