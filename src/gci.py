@@ -14,7 +14,7 @@ class GuildClockInBot(commands.Bot):
       "hello", 
       "character",
       #"attendance",
-      "loot",
+      #"loot",
       "guild_info",
       "settings",
       "recipe"
