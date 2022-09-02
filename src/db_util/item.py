@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from discord import InvalidArgument
-from sqlalchemy import or_, select, Integer
+from sqlalchemy import or_, select, Integer, delete
 from db_util.character import get_character
 from db_util.wow_data import InventorySlotEnum
 from models import Item, Loot, Recipe, UserRecipe
@@ -149,3 +149,9 @@ async def get_character_recipes(sess, id_guild, character_name, user_id, profess
   query = select(UserRecipe).where(*where_clause)
   results = await sess.execute(query)
   return results.scalars().all()
+
+
+async def remove_user_recipes(sess, character_id, recipe_ids):
+  query = delete(UserRecipe).where(UserRecipe.id_character == character_id, UserRecipe.id_recipe.in_(recipe_ids))
+  await sess.execute(query)
+  

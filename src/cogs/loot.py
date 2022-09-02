@@ -24,7 +24,7 @@ class LootCog(commands.Cog):
     item_name: str = None,
     item_id: Option(int, name="id") = None,
     char_name: Option(str, name="character") = None,
-    for_user: discord.Member = None
+    for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None
   ):
     try:
       if item_name is None and item_id is None:
@@ -52,7 +52,7 @@ class LootCog(commands.Cog):
     item_id: Option(int, name="id"),
     remove_all: Option(bool, name="all", description="True to remove all occurences of this item, instead of just one") = False, 
     char_name: Option(str, name="character") = None,
-    for_user: discord.Member = None
+    for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None
   ):
     try:
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))

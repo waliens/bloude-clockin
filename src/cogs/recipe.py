@@ -7,7 +7,7 @@ from cogs.util import get_applied_user_id
 from pycord18n.extension import _ as _t
 
 from db_util.character import get_character
-from db_util.item import get_character_recipes, get_crafters, get_recipes, items_search, register_user_recipes
+from db_util.item import get_character_recipes, get_crafters, get_recipes, items_search, register_user_recipes, remove_user_recipes
 from db_util.wow_data import ProfessionEnum
 from models import Recipe
 from ui.item import RecipeCraftersEmbed, RecipeCraftersListSelectorView, RecipeListEmbed, RecipeRegistrationListSelectorView, UserRecipeEmbed
@@ -19,14 +19,14 @@ class RecipeCog(commands.Cog):
   
   recipe_group = discord.SlashCommandGroup("recipe", description="Commands for managing recipes.")
 
-  @recipe_group.command(description="Register one or more recipes on a character.")
+  @recipe_group.command(description="Add one or more recipes to a character.")
   @guild_only()
-  async def register(self, ctx, 
+  async def add(self, ctx, 
     profession: Option(ProfessionEnum, description="Search for a recipe for this profession (ignored if `recipe_ids` is provided).") = None,
     recipe_name: Option(str, description="A name to look for the recipe (ignored if `recipe_ids` is provided).") = None,
     recipe_ids: Option(str, name="ids", description="A comma-separated list of recipe spell identifiers.") = None,
     char_name: Option(str, name="character", description="The character who has the recipe. By default, the main character of the user.") = None,
-    for_user: discord.Member = None
+    for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None
   ):
     try:
       if (recipe_name is None or profession is None) and recipe_ids is None:
@@ -104,6 +104,30 @@ class RecipeCog(commands.Cog):
             await ctx.respond(embed=recipe_list_embed, view=reciper_list_selector_view, ephemeral=not public)
     except InvalidArgument as e:
       await ctx.respond(_t("recipe.crafters.error", error=str(e)), ephemeral=not public)
+
+  @recipe_group.command(description="")
+  @guild_only()
+  async def remove(self, ctx, 
+    recipe_ids: Option(str, name="ids", description="A comma-separated list of recipe spell identifiers."),
+    char_name: Option(str, name="character", description="The character whose recipes should be removed. By default, the main character of the user.") = None,
+    for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None
+  ):
+    try:
+      await ctx.defer(ephemeral=True)
+      if recipe_ids is None:
+        raise InvalidArgument(_t("recipe.invalid.missing.ids"))
+      
+      user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
+      guild_id = str(ctx.guild_id)
+
+      async with self.bot.db_session_class() as sess:
+        async with sess.begin():
+          character = await get_character(sess, guild_id, id_user=user_id, name=char_name)
+          await remove_user_recipes(sess, character.id, [int(v.strip()) for v in recipe_ids.split(",")])
+          await ctx.respond(_t("recipe.remove.success"), ephemeral=True)
+  
+    except InvalidArgument as e:
+      await ctx.respond(_t("recipe.remove.error", error=str(e)), ephemeral=True)
 
 
 def setup(bot):
