@@ -24,7 +24,7 @@ class LootCog(commands.Cog):
     item_name: str = None,
     item_id: Option(int, name="id") = None,
     char_name: Option(str, name="character") = None,
-    for_user: discord.Member = None
+    for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None
   ):
     try:
       if item_name is None and item_id is None:
@@ -40,19 +40,20 @@ class LootCog(commands.Cog):
           max_items = 10
           character = await get_character(sess, guild_id, user_id, char_name)
           items = await items_search(sess, item_name, item_id, max_items=max_items + 1)
-          item_list_embed = ItemListEmbed(items, max_items=max_items, title=_t("loot.list.ui.matching"))
+          item_list_embed = ItemListEmbed(items, max_items=max_items, title=_t("general.ui.list.matching"))
           item_list_selector_view = LootListSelectorView(self.bot, items, character.id, max_items=max_items)
           await ctx.respond(embed=item_list_embed, view=item_list_selector_view, ephemeral=True)
 
     except InvalidArgument as e:
       await ctx.respond(_t("loot.add.error", error=str(e)), ephemeral=True)
 
+
   @loot_group.command(description="Remove one item from your loot list")
   async def remove(self, ctx,
     item_id: Option(int, name="id"),
     remove_all: Option(bool, name="all", description="True to remove all occurences of this item, instead of just one") = False, 
     char_name: Option(str, name="character") = None,
-    for_user: discord.Member = None
+    for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None
   ):
     try:
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
@@ -74,7 +75,6 @@ class LootCog(commands.Cog):
 
     except InvalidArgument as e:
       await ctx.respond(_t("loot.delete.error", error=str(e)), ephemeral=True)
-
 
 
   @discord.slash_command(description="List loots for a character.")

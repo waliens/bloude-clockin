@@ -10,6 +10,8 @@ from sqlalchemy.inspection import inspect
 from alembic.config import Config
 from alembic import command
 
+from db_util.wow_data import ProfessionEnum
+
 
 def get_db_url(with_async=True):
   username = os.getenv("POSTGRES_USER")
@@ -36,6 +38,20 @@ async def add_items(session):
     items = [Item(**item) for item in json.load(file)]
     logging.getLogger().info("Loading items into the database.")
     session.add_all(items)
+
+
+
+async def add_recipes(session):
+  from models import Recipe
+  with open("./data/recipes.json", "r", encoding="utf-8") as file:
+    recipes = list()
+    for recipe in json.load(file):
+        recipe_model = Recipe(**recipe)
+        recipe_model.profession = ProfessionEnum[recipe["profession"]]
+        recipes.append(recipe_model)
+    logging.getLogger().info("Loading recipes into the database.")
+    session.add_all(recipes)
+
 
 
 async def add_charters(session):
@@ -82,7 +98,7 @@ async def init_db():
             await conn.run_sync(run_alambic_stamp_head, alembic_cfg)
             await conn.commit()
             
-            add_functions = [add_raids, add_items, add_charters]
+            add_functions = [add_raids, add_items, add_charters, add_recipes]
             async with db_session() as sess:
                 async with sess.begin():
                     for add_fn in add_functions:

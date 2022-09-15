@@ -1,10 +1,10 @@
-import datetime
+from collections import defaultdict
 
 from discord import InvalidArgument
-import pytz
-from sqlalchemy import or_, select, Integer
+from sqlalchemy import or_, select, Integer, delete
+from db_util.character import get_character
 from db_util.wow_data import InventorySlotEnum
-from models import Item, Loot
+from models import Item, Loot, Recipe, UserRecipe
 
 from sqlalchemy.exc import NoResultFound, IntegrityError
 
@@ -19,11 +19,11 @@ def strcmp_sql_fn(field, query, exact=True):
     return field.ilike(f"%{t_query}%")
 
 
-async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1):
+async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1, model_class=Item, filters=None):
   """At least name or id should be provided, otherwise invalid argument error is raised"""
   try:
     if _id is not None:
-      id_query = select(Item).where(Item.id == _id)
+      id_query = select(model_class).where(model_class.id == _id)
       id_result = await sess.execute(id_query) 
       return [id_result.scalars().one()]
 
@@ -31,8 +31,11 @@ async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1):
       raise InvalidArgument(_t("item.invalid.missing.nameorid"))
  
     # attempt exact match 
-    name_fields = [Item.name_en, Item.name_fr]
-    exact_match_query = select(Item).where(or_(*[strcmp_sql_fn(f, name) for f in name_fields])).order_by(Item.id)
+    name_fields = [model_class.name_en, model_class.name_fr]
+    exact_where_clause = [or_(*[strcmp_sql_fn(f, name) for f in name_fields])]
+    if filters is not None:
+      exact_where_clause.extend(filters)
+    exact_match_query = select(model_class).where(*exact_where_clause).order_by(model_class.id)
     if max_items > 0:
       exact_match_query = exact_match_query.limit(max_items)
     exact_results = await sess.execute(exact_match_query)
@@ -42,7 +45,10 @@ async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1):
       return exact_items
 
     # no exact match 
-    loose_match_query = select(Item).where(or_(*[strcmp_sql_fn(f, name, exact=False) for f in name_fields])).order_by(Item.id)
+    loose_where_clause = [or_(*[strcmp_sql_fn(f, name, exact=False) for f in name_fields])]
+    if len(filters) > 0:
+      loose_where_clause.extend(filters)
+    loose_match_query = select(model_class).where(*loose_where_clause).order_by(model_class.id)
     if max_items > 0:
       loose_match_query = loose_match_query.limit(max_items)
     loose_results = await sess.execute(loose_match_query)
@@ -74,6 +80,20 @@ async def register_loot(sess, item_id, character_id):
     raise InvalidArgument(_t("item.invalid.alreadyrecorded"))
 
 
+async def register_user_recipes(sess, recipe_ids, character_id):
+  """Register a recipe for the given character"""
+  try:
+    new_recipes = [
+      UserRecipe(id_recipe=recipe_id, id_character=character_id)
+      for recipe_id in recipe_ids
+    ]
+    sess.add_all(new_recipes)
+    await sess.commit()
+    return new_recipes
+  except IntegrityError:
+    raise InvalidArgument(_t("recipe.invalid.alreadyrecorded"))
+
+
 async def fetch_loots(sess, character_id: int, slot: InventorySlotEnum=None, max_items: int=-1):
   """Fetch loots"""
   where_clause = [Loot.id_character == character_id]
@@ -93,3 +113,45 @@ async def fetch_loots(sess, character_id: int, slot: InventorySlotEnum=None, max
   
   result = await sess.execute(query)
   return result.scalars().all()
+
+
+async def get_crafters(sess, recipe_ids):
+  # get recipes
+  recipes = await get_recipes(sess, recipe_ids)
+
+  # get user recipes
+  query = select(UserRecipe).where(UserRecipe.id_recipe.in_(recipe_ids))
+  result = await sess.execute(query)
+  user_recipes = result.scalars().all()
+
+  # structure as a list of tuples
+  recipe_characters = defaultdict(list)
+  for user_recipe in user_recipes:
+    recipe_characters[user_recipe.id_recipe].append(user_recipe.character)
+  
+  return [(recipe, recipe_characters[recipe.id]) for recipe in recipes]
+
+
+async def get_recipes(sess, recipe_ids):
+  recipes_query = select(Recipe).where(Recipe.id.in_(recipe_ids))
+  recipes_result = await sess.execute(recipes_query)
+  return recipes_result.scalars().all()
+
+
+async def get_character_recipes(sess, id_guild, character_name, user_id, profession=None):
+  # extract the character
+  character = await get_character(sess, id_guild, id_user=user_id, name=character_name)
+
+  # query recipes
+  where_clause = [UserRecipe.character.has(id=character.id)]
+  if profession is not None:
+    where_clause.append(UserRecipe.recipe.has(profession=profession))
+  query = select(UserRecipe).where(*where_clause)
+  results = await sess.execute(query)
+  return results.scalars().all()
+
+
+async def remove_user_recipes(sess, character_id, recipe_ids):
+  query = delete(UserRecipe).where(UserRecipe.id_character == character_id, UserRecipe.id_recipe.in_(recipe_ids))
+  await sess.execute(query)
+  

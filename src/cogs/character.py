@@ -29,7 +29,7 @@ class CharacterCog(commands.Cog):
     role: RoleEnum, 
     character_class: Option(ClassEnum, "class"),
     is_main: bool = False, 
-    for_user: discord.Member = None
+    for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None
   ):
     """Add a new character
     """
@@ -63,7 +63,7 @@ class CharacterCog(commands.Cog):
     name: str, 
     new_name: str = None, 
     is_main: bool = None, 
-    for_user: discord.Member = None, 
+    for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None, 
     role: Option(RoleEnum, description="If specified, will also trigger spec update when relevant") = None, 
     character_class: Option(ClassEnum, name="class", description="If specified, will also trigger spec update when relevant") = None
   ):
@@ -102,7 +102,7 @@ class CharacterCog(commands.Cog):
 
   @character_group.command(description="Delete a character")
   @guild_only()
-  async def delete(self, ctx, name: str, for_user: discord.Member = None):
+  async def delete(self, ctx, name: str, for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None):
     """Delete a character
     """
     try:

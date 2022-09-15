@@ -5,7 +5,7 @@ from pycord18n.extension import _ as _t
 from models import GuildSettings
 
 
-class Hello(commands.Cog): 
+class HelloCog(commands.Cog): 
   def __init__(self, bot): 
     self.bot = bot
 
@@ -21,4 +21,4 @@ class Hello(commands.Cog):
         await ctx.respond(message)
 
 def setup(bot): # this is called by Pycord to setup the cog
-  bot.add_cog(Hello(bot)) # add the cog to the bot
+  bot.add_cog(HelloCog(bot)) # add the cog to the bot
