@@ -1,6 +1,7 @@
 
 from pygsheets import Spreadsheet, Worksheet
-from item_priorities.priorities import PriorityList
+from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
+from item_priorities.priorities import ParseError, PrioTierEnum, PriorityList, enum_get
 
 
 class ItemWithPriority(object):
