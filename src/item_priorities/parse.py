@@ -1,7 +1,7 @@
 
 from pygsheets import Spreadsheet, Worksheet
 from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
-from item_priorities.priorities import ParseError, PrioTierEnum, PriorityList, enum_get
+from item_priorities.priorities import ParseError, PrioTierEnum, PriorityList, SepEnum, enum_get
 
 
 class ItemWithPriority(object):
@@ -29,6 +29,16 @@ class PrioParser(object):
         raise ParseError("duplicate items in different sheets")
       for k, v in new_items.items():
         self._item_prio[k] = v
+
+  @property
+  def items(self):
+    return self._item_prio
+
+  def __getitem__(self, index):
+    return self._item_prio[int(index)]
+
+  def __len__(self):
+    return len(self._item_prio)
 
   def _parse_roles(self):
     ws = self._gsheet.worksheet_by_title(self.CONFIG_SHEET_NAME)
@@ -66,7 +76,7 @@ class PrioParser(object):
         value = None
         if curr_item in self._name2role:
           value = self._name2role[curr_item]
-        elif curr_item in PrioTierEnum.__members__:
+        elif SepEnum.is_valid(curr_item):
           value = curr_item
         priorities.append(value)
 

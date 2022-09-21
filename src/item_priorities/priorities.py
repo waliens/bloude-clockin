@@ -33,6 +33,24 @@ class PrioTierEnum(Enum):
   IS_A_UP = 35
   IS_USELESS = 100 
 
+  @staticmethod
+  def useful_tiers():
+    return [
+      PrioTierEnum.IS_BIS,
+      PrioTierEnum.IS_ALMOST_BIS,
+      PrioTierEnum.IS_AVERAGE,
+      PrioTierEnum.IS_A_UP
+    ]
+
+class SepEnum(Enum):
+  TIER = ">>"
+  BETTER = ">"
+  EQUAL = "~"
+
+  @classmethod
+  def is_valid(cls, v):
+    return v in {e.value for e in cls}
+
 
 def enum_get(e: Enum, k, default=None):
   try:
@@ -42,22 +60,21 @@ def enum_get(e: Enum, k, default=None):
 
 
 class PriorityList(object):
-  SEP_TIER = ">>"
-  SEP_BETTER = ">"
-  SEP_EQUAL = "~"
 
   def __init__(self, prio_array: list) -> None:
     self._priorities = self._parse(prio_array)
 
-  @property
-  def priorities(self):
-    return [PrioTierEnum.IS_BIS, PrioTierEnum.IS_ALMOST_BIS, PrioTierEnum.IS_AVERAGE, PrioTierEnum.IS_A_UP, PrioTierEnum.IS_USELESS]
+  def has_roles(self):
+    return any([self.tier_has_roles(tier) for tier in self._priorities.keys()])
+
+  def tier_has_roles(self, tier):
+    return sum([len(sublevel) for sublevels in self._priorities.get(tier, []) for sublevel in sublevels]) > 0
 
   def _parse(self, array):
     prios = defaultdict(list)
     already_processed = set()
     curr_index = 0
-    for curr_tier in self.priorities[:-1]:
+    for curr_tier in PrioTierEnum.useful_tiers():
       prios[curr_tier].append(set())
       while curr_index < len(array):
         elem = array[curr_index]
@@ -65,11 +82,11 @@ class PriorityList(object):
         if elem is None:
           continue
         if isinstance(elem, str):  # sep:
-          if elem == self.SEP_TIER or elem is None or len(elem.strip()) == 0:
+          if elem == SepEnum.TIER.value or elem is None or len(elem.strip()) == 0:
             break
-          elif elem == self.SEP_EQUAL:
+          elif elem == SepEnum.EQUAL.value:
             continue
-          elif elem == self.SEP_BETTER:
+          elif elem == SepEnum.BETTER.value:
             prios[curr_tier].append(set())
           else: raise InvalidSepError(elem)
         else:
@@ -79,14 +96,17 @@ class PriorityList(object):
           prios[curr_tier][-1].add(elem)
     return prios
 
-  def get_priority_tier(self, query):
+  def get_priority_tier(self, query: tuple):
     for tier_prio, sublevels in self._priorities.items():
       for level in sublevels:
         if query in level:
           return tier_prio
     return PrioTierEnum.IS_USELESS
+
+  def get_for_tier(self, tier: PrioTierEnum):
+    return self._priorities[tier]
   
-  def cmp(self, query1, query2):
+  def cmp(self, query1: tuple, query2: tuple):
     """
     q1 < q2 => return negative
     q1 = q2 => return 0
