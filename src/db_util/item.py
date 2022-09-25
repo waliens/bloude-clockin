@@ -4,9 +4,9 @@ from discord import InvalidArgument
 from sqlalchemy import or_, select, Integer, delete
 from db_util.character import get_character
 from db_util.wow_data import InventorySlotEnum
-from models import Item, Loot, Recipe, UserRecipe
+from models import Character, Item, Loot, Recipe, UserRecipe
 
-from sqlalchemy.exc import NoResultFound, IntegrityError
+from sqlalchemy.exc import NoResultFound, IntegrityError, MultipleResultsFound
 
 from pycord18n.extension import _ as _t
 
@@ -62,12 +62,12 @@ async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1, m
     raise InvalidArgument(_t("item.invalid.nomatch"))
 
 
-async def register_loot(sess, item_id, character_id):
+async def register_loot(sess, item_id, character_id, in_dkp=False, commit=True):
   """Register a loot for the given character"""
   try:
     loot = await sess.get(Loot, {"id_item": item_id, "id_character": character_id})
     if loot is None:
-      new_loot = Loot(id_item=item_id, id_character=character_id, count=1)
+      new_loot = Loot(id_item=item_id, id_character=character_id, count=1, in_dkp=in_dkp)
       sess.add(new_loot)
     else:
       maxcount = int(loot.item.metadata_["maxcount"])
@@ -75,9 +75,31 @@ async def register_loot(sess, item_id, character_id):
         loot.count += 1
       else:
         raise InvalidArgument(_t("loot.invalid.toomany", count=maxcount))
-    await sess.commit()
-  except IntegrityError as e:
+    if commit:
+      await sess.commit()
+  except IntegrityError:
     raise InvalidArgument(_t("item.invalid.alreadyrecorded"))
+
+
+async def register_bulk_loots(sess, guild_id, loots_maps: dict, in_dkp=False):
+  """"""
+  for character_name, item_ids in loots_maps.items():
+    # extract character
+    try:
+      char_result = await sess.execute(select(Character).where(Character.name == character_name, Character.id_guild == guild_id))
+      character = char_result.scalars().one()
+    except NoResultFound:
+      raise InvalidArgument(_t("loot.invalid.nocharacter", character_name=character_name))
+    except MultipleResultsFound:
+      raise InvalidArgument(_t("loot.invalid.multiplecharacters", character_name=character_name))
+
+    for item_id in item_ids:
+      try:
+        await register_loot(sess, item_id, character.id, id_dkp=in_dkp, commit=False)
+      except InvalidArgument:
+        raise InvalidArgument(_t("item.invalid.alreadyrecorded_withinfo", item_id=item_id, character_name=character_name))
+
+  await sess.commit()
 
 
 async def register_user_recipes(sess, recipe_ids, character_id):

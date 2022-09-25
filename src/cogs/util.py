@@ -1,6 +1,9 @@
 
 import datetime
+import re
 from discord import InvalidArgument
+
+from pycord18n.extension import _ as _t
 
 
 def default_if_none(v, d=None):
@@ -13,7 +16,7 @@ def get_applied_user_id(ctx, for_user, user_id, requires_admin=True):
     return user_id
 
   if user_id != str(for_user.id) and (requires_admin and not ctx.author.guild_permissions.administrator):
-    raise InvalidArgument("you do not have the permissions to execute this command on behalf of another user")
+    raise InvalidArgument(_t("general.invalid.onbehalf"))
 
   return str(for_user.id)
 
@@ -24,7 +27,7 @@ def parse_date(date_str, default=None):
       return default
     return datetime.datetime.strptime(date_str, '%d/%m/%Y').date()
   except ValueError:
-    raise InvalidArgument("cannot parse date, should be in format DD/MM/YYYY")
+    raise InvalidArgument(_t("general.invalid.date"))
 
 
 def parse_datetime(datetime_str, default=None):
@@ -33,4 +36,19 @@ def parse_datetime(datetime_str, default=None):
       return default
     return datetime.datetime.strptime(datetime_str, '%d/%m/%Y %H:%M')
   except ValueError:
-    raise InvalidArgument("cannot parse date, should be in format DD/MM/YYYY HH:mm")
+    raise InvalidArgument(_t("general.invalid.datetime"))
+
+
+def parse_loots_str(loots: str):
+  if len(loots.strip()) == 0:
+    return {}
+
+  pattern = r"^(?:[^:;]+:(?:[0-9]+)(?:,[0-9]+)*)(?:;[^:;]+:(?:[0-9]+)(?:,[0-9]+)*)*$"
+      
+  if re.match(pattern, loots) is None:
+    raise InvalidArgument(_t("loot.invalid.bulk_str"))
+  
+  return {
+    char_list.split(":")[0].strip(): list(map(int, char_list.split(":")[1].split(","))) 
+    for char_list in loots.split(";")
+  }

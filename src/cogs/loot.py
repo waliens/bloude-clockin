@@ -1,17 +1,20 @@
 
 from os import remove
+from pydoc import describe
+import re
 from discord import InvalidArgument, Option, SlashCommandGroup
 from discord.ext import commands
 import discord
 
-from cogs.util import get_applied_user_id
+from cogs.util import get_applied_user_id, parse_loots_str
 from db_util.character import get_character
-from db_util.item import fetch_loots, items_search
+from db_util.item import fetch_loots, items_search, register_bulk_loots
 from db_util.wow_data import InventorySlotEnum
 from models import Loot
 from ui.item import ItemListEmbed, LootListEmbed, LootListSelectorView
 
 from pycord18n.extension import _ as _t
+
 
 class LootCog(commands.Cog):
   def __init__(self, bot):
@@ -76,6 +79,20 @@ class LootCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(_t("loot.delete.error", error=str(e)), ephemeral=True)
 
+  @loot_group.command(description="Add loot in bulks. By default they are added to the dkp system.")
+  @commands.has_permissions(administrator=True)
+  async def bulk(self, ctx, 
+    loots: Option(str, description="List of player names and item identifiers. Example: ´Arthas:40800,39865;Lutherqt:25006´."),
+    in_dkp: Option(str, description="Whether or not these loots should be included in dkp system (True by default).") = True
+  ):
+    try:
+      guild_id = str(ctx.guild_id)
+      async with self.bot.db_session_class() as sess:
+        async with sess.begin():
+          await register_bulk_loots(sess, guild_id, parse_loots_str(loots), in_dkp=in_dkp)
+          await ctx.respond(_t("loot.bulk.success"), ephemeral=True)
+    except InvalidArgument as e:
+      await ctx.respond(_t("loot.bulk.error", error=str(e)), ephemeral=True)
 
   @discord.slash_command(description="List loots for a character.")
   async def loots(self, ctx,
