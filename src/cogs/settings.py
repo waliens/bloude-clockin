@@ -84,7 +84,7 @@ class SettingsCog(commands.Cog):
   @commands.has_permissions(administrator=True)
   @guild_only()
   async def set(self, ctx,
-    identifier: Option(str, description="The Google sheet identifier.") 
+    identifier: Option(str, description="The Google spreadsheet identifier.") 
   ):
     try:
       guild_id = str(ctx.guild.id)
@@ -114,7 +114,7 @@ class SettingsCog(commands.Cog):
   async def account(self, ctx):
     await ctx.respond(_t("settings.gsheet.google.name", bot_gaccount=make_bot_guser_name()), ephemeral=True)
 
-  @gsheet_settings.command(description="Trigger data export to the Google sheet.")
+  @gsheet_settings.command(description="Trigger data export to the Google spreadsheet.")
   @commands.has_permissions(administrator=True)
   @guild_only()
   async def export(self, ctx):
