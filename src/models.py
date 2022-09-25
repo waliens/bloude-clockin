@@ -114,6 +114,7 @@ class Loot(Base):
   __tablename__ = "loot"
   id_character = Column(Integer, ForeignKey("character.id", ondelete="CASCADE"), primary_key=True)
   id_item = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), primary_key=True)
+  in_dkp = Column(Boolean, default=False)
   count = Column(Integer, default=1)
   created_at = Column(DateTime, default=utcnow)
   updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
