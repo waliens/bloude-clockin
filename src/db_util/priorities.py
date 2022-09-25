@@ -143,6 +143,10 @@ class ItemWithPriority(object):
     self._priority_list = priority_list
     self._metadata = metadata
 
+  @property 
+  def priority_list(self):
+    return self._priority_list
+
 
 def empty_prio_str_dict():
   return {}
@@ -208,7 +212,8 @@ async def generate_prio_str_for_item(sess, id_guild, item_priority: ItemWithPrio
         # character should not be listed if one of these condition is filled
         # - he has looted the item
         # - TODO he has looted an upgrade
-        found_characters = [c.name for c in character_map[role] if c.id not in characters_have_looted]
+        # TODO also display ilvl of current item at that slot
+        found_characters = [f"{c.name} ({c_dkp})" for c, c_dkp in character_map[role] if c.id not in characters_have_looted]
         sublevel_characters.extend(found_characters)
       if len(sublevel_characters) == 0:
         continue

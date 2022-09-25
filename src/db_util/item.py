@@ -95,7 +95,7 @@ async def register_bulk_loots(sess, guild_id, loots_maps: dict, in_dkp=False):
 
     for item_id in item_ids:
       try:
-        await register_loot(sess, item_id, character.id, id_dkp=in_dkp, commit=False)
+        await register_loot(sess, item_id, character.id, in_dkp=in_dkp, commit=False)
       except InvalidArgument:
         raise InvalidArgument(_t("item.invalid.alreadyrecorded_withinfo", item_id=item_id, character_name=character_name))
 

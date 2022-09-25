@@ -24,8 +24,7 @@ class GuildSettings(Base):
   locale = Column(String(32), default=DEFAULT_TZ)  # locale string
   timezone = Column(String(256), default=DEFAULT_LOCALE)  # timezone identifier
   cheer_message = Column(String(256), nullable=True, default=None)
-  id_export_gsheet = Column(String(256), nullable=True, default=None) 
-
+  id_export_gsheet = Column(String(256), nullable=True, default=None)
 
 
 class Character(Base):
@@ -74,6 +73,7 @@ class Attendance(Base):
   raid_datetime = Column(DateTime)
   raid_size = Column(Enum(RaidSizeEnum))
   cancelled = Column(Boolean)  # if user cancelled his attendance post-registration (on a raid helper for instance)
+  is_guild_event = Column(Boolean, default=False, nullable=False)
   
   character = relationship("Character", lazy="joined")
   raid = relationship("Raid", lazy="joined")
@@ -114,7 +114,7 @@ class Loot(Base):
   __tablename__ = "loot"
   id_character = Column(Integer, ForeignKey("character.id", ondelete="CASCADE"), primary_key=True)
   id_item = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), primary_key=True)
-  in_dkp = Column(Boolean, default=False)
+  in_dkp = Column(Boolean, default=False, nullable=False)
   count = Column(Integer, default=1)
   created_at = Column(DateTime, default=utcnow)
   updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)

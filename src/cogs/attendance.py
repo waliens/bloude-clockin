@@ -3,8 +3,8 @@ import pytz
 import discord
 from discord import InvalidArgument, Option, guild_only
 from discord.ext import commands
-from db_util.attendance import fetch_attendances
 from db_util.character import get_character
+from db_util.attendance import fetch_attendances
 from db_util.raid import get_raids
 from ui.attendance import CharacterAttendanceEmbed
 from ui.raid import RaidSelectorModal
@@ -68,7 +68,6 @@ class AttendanceCog(commands.Cog):
       
     except InvalidArgument as e:
       await ctx.respond(f"Cannot report the attendance: {str(e)}", ephemeral=True)
- 
 
 
 def setup(bot):

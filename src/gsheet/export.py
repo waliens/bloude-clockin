@@ -4,6 +4,7 @@ from collections import defaultdict
 from pygsheets import Spreadsheet, Worksheet
 from discord import InvalidArgument
 from sqlalchemy import select
+from db_util.dkp import compute_dkp_score
 from db_util.priorities import PrioTierEnum, generate_prio_str_for_item
 from gsheet_helpers import get_creds
 from models import Character, GuildSettings, Item, Loot
@@ -120,7 +121,8 @@ async def generate_character_prio_sheet(sess, sheet, id_guild, items: dict, role
   characters = results.scalars().all()
   char_dict = defaultdict(list)
   for char in characters:
-    char_dict[(char.character_class, char.role, char.spec)].append(char)
+    char_dkp = await compute_dkp_score(sess, char, items)
+    char_dict[(char.character_class, char.role, char.spec)].append((char, char_dkp))
 
   # generate sheet table 
   sheet_table = list()
