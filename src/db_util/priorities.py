@@ -1,5 +1,8 @@
 from collections import defaultdict
 from enum import Enum
+from sqlalchemy import select
+
+from models import Character, Loot
 
 
 class ParseError(Exception):
@@ -132,3 +135,86 @@ class PriorityList(object):
 
   def is_equiv(self, query1, query2):
     return self.cmp(query1, query2) == 0
+
+
+class ItemWithPriority(object):
+  def __init__(self, item_id: int, priority_list: PriorityList, **metadata):
+    self._item_id = item_id
+    self._priority_list = priority_list
+    self._metadata = metadata
+
+
+def empty_prio_str_dict():
+  return {}
+
+
+def format_role_list(roles, role_names_map: dict):
+  return [role_names_map.get(role, "???") for role in roles]
+
+
+async def generate_prio_str_for_item(sess, id_guild, item_priority: ItemWithPriority, role_names_map: dict= None, character_map: dict = None):
+  """
+  Parameters
+  ----------
+  sess: AsyncSession
+  item_priority: ItemWithPriority
+    An item with its priority
+  role_names_map: ???
+    Map a role tuple with its actual name
+  characters_map: dict
+    Maps role tuple with a list of characters
+  locale: str
+    Language for generation
+
+  Returns
+  -------
+  prio_dict: dict
+    Maps prio tier enum to it prioritized list of players/roles
+  """
+  item_id = item_priority._item_id
+  priority = item_priority._priority_list
+  if not priority.has_roles():
+    return empty_prio_str_dict()
+
+  if character_map is None:
+    return {
+      tier: " > ".join([" = ".join(format_role_list(sublevel, role_names_map)) for sublevel in priority.get_for_tier(tier) if len(sublevel) > 0]) 
+      for tier in PrioTierEnum
+      if priority.tier_has_roles(tier)
+    }
+  
+  # consider already looted items
+  already_looted_query = select(Loot).where(Loot.id_item == item_id, Loot.character.has(Character.id_guild == id_guild))
+  already_looted_results = await sess.execute(already_looted_query)
+  curr_item_loots = already_looted_results.scalars().all()
+  characters_have_looted = {loot.id_character for loot in curr_item_loots}
+
+  # TODO consider already looted in the same slot
+  # inv_type = item.metadata_["inventoryType"]
+  # query = select(Loot).where(Loot.item.has(Item.metadata_['InventoryType'].astext.cast(Integer) == inv_type))
+  # results = await sess.execute(query)
+  # loots = results.scalars().all()
+
+  prio_str_dict = dict()
+  for tier in PrioTierEnum:
+    tier_sublevels = priority.get_for_tier(tier)
+    if not priority.tier_has_roles(tier):
+      continue
+    
+    tier_characters = list()
+    for sublevel in tier_sublevels:
+      sublevel_characters = list()
+      for role in sublevel:
+        # character should not be listed if one of these condition is filled
+        # - he has looted the item
+        # - TODO he has looted an upgrade
+        found_characters = [c.name for c in character_map[role] if c.id not in characters_have_looted]
+        sublevel_characters.extend(found_characters)
+      if len(sublevel_characters) == 0:
+        continue
+      tier_characters.append(" = ".join(sublevel_characters))
+    if len(tier_characters) == 0:
+      continue
+    prio_str_dict[tier] = " > ".join(tier_characters)
+  
+  return prio_str_dict

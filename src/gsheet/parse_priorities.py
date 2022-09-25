@@ -1,14 +1,7 @@
 
 from pygsheets import Spreadsheet, Worksheet
 from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
-from item_priorities.priorities import ParseError, PrioTierEnum, PriorityList, SepEnum, enum_get
-
-
-class ItemWithPriority(object):
-  def __init__(self, item_id: int, priority_list: PriorityList, **metadata):
-    self._item_id = item_id
-    self._priority_list = priority_list
-    self._metadata = metadata
+from db_util.priorities import ItemWithPriority, ParseError, PrioTierEnum, PriorityList, SepEnum, enum_get
 
 
 class PrioParser(object):

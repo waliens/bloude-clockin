@@ -1,10 +1,14 @@
 import pygsheets
+
+from collections import defaultdict
 from pygsheets import Spreadsheet, Worksheet
 from discord import InvalidArgument
 from sqlalchemy import select
+from db_util.priorities import PrioTierEnum, generate_prio_str_for_item
 from gsheet_helpers import get_creds
-from models import Character, GuildSettings, Loot
+from models import Character, GuildSettings, Item, Loot
 from pycord18n.extension import _ as _t
+from lang.util import localized_attr
 
 
 def create_worksheet(sheet: Spreadsheet, name: str, table) -> Worksheet:
@@ -97,3 +101,46 @@ async def export_in_worksheets(sess, guild_id):
 
   return chr_worksheet, lts_worksheet
 
+
+async def generate_character_prio_sheet(sess, sheet, id_guild, items: dict, role2name: dict):
+  """
+  Parameters
+  ----------
+  sheet: pygsheets.SpreadSheet
+    The worksheet will be generated/replaced here
+  id_guild: [int|str]
+    Guild identifierµ
+  items: Mapping[int,ItemWithPriority]
+  role2name: Mapping[tuple,str]
+    Maps role tuples with its str name 
+  """
+  # read main characters list
+  query = select(Character).where(Character.is_main == True, Character.id_guild == id_guild)
+  results = await sess.execute(query)
+  characters = results.scalars().all()
+  char_dict = defaultdict(list)
+  for char in characters:
+    char_dict[(char.character_class, char.role, char.spec)].append(char)
+
+  # generate sheet table 
+  sheet_table = list()
+  sheet_table.append([
+    _t("prio.gsheet.col.id"), 
+    _t("prio.gsheet.col.name"), 
+    _t("prio.gsheet.col.bis"), 
+    _t("prio.gsheet.col.almost_bis"), 
+    _t("prio.gsheet.col.average"), 
+    _t("prio.gsheet.col.is_up")
+  ])
+  
+  for item_id, item_with_priority in items.items():
+    item = await sess.get(Item, item_id)
+    if item is None:
+      continue 
+    prio_dict = await generate_prio_str_for_item(sess, id_guild, item_with_priority, role2name, char_dict)
+    if len(prio_dict) == 0:
+      continue
+    item_descriptor = [item.id, localized_attr(item, 'name')] + [prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()]
+    sheet_table.append(item_descriptor)
+  
+  create_worksheet(sheet, name="gci_prio", table=sheet_table)

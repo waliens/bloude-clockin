@@ -1,7 +1,7 @@
 from discord import guild_only, SlashCommandGroup, Option, InvalidArgument
 from discord.ext import commands
 from pycord18n.extension import _ as _t, I18nExtension
-from db_util.gsheet_export import export_in_worksheets
+from gsheet.export import export_in_worksheets
 from gsheet_helpers import SheetStateEnum, check_sheet, make_bot_guser_name
 from models import GuildSettings
 

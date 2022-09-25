@@ -22,6 +22,7 @@ ADD src/logging.conf ./logging.conf
 ADD src/cogs ./cogs
 ADD src/alembic ./alembic
 ADD src/db_util ./db_util
+ADD src/gsheet ./gsheet
 ADD src/data ./data
 ADD src/ui ./ui
 ADD src/lang ./lang

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from item_priorities.priorities import PriorityList, PrioTierEnum
+from db_util.priorities import PriorityList, PrioTierEnum
 from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
 
 PALRET = (ClassEnum.PALADIN, RoleEnum.MELEE_DPS, None)
