@@ -8,7 +8,7 @@ import discord
 
 from cogs.util import get_applied_user_id, parse_loots_str
 from db_util.character import get_character
-from db_util.item import fetch_loots, items_search, register_bulk_loots
+from db_util.item import fetch_loots, items_search, register_bulk_loots, remove_loots
 from db_util.wow_data import InventorySlotEnum
 from models import Loot
 from ui.item import ItemListEmbed, LootListEmbed, LootListSelectorView
@@ -59,21 +59,14 @@ class LootCog(commands.Cog):
     for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None
   ):
     try:
+      await ctx.defer(ephemeral=True)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       guild_id = str(ctx.guild_id)
 
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
           character = await get_character(sess, guild_id, user_id, char_name)
-          loot = await sess.get(Loot, {"id_character": character.id, "id_item": item_id})
-          if loot is None:
-            await ctx.respond(_t("loot.delete.success"), ephemeral=True) 
-            return
-          if loot.count == 1 or remove_all:
-            await sess.delete(loot)
-          else:
-            loot.count -= 1
-          await sess.commit()
+          await remove_loots(sess, character.id, item_id, only_last=not remove_all, force_remove_in_dkp=False)  # users cannot remove loots in_dkp
           await ctx.respond(_t("loot.delete.success"), ephemeral=True) 
 
     except InvalidArgument as e:

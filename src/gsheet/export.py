@@ -78,8 +78,7 @@ async def create_loot_table(sess, guild_id):
       loot.item.id,
       loot.item.name_en,
       loot.item.name_fr,
-      loot.count,
-      (loot.created_at if loot.updated_at is None else loot.updated_at).strftime('%d/%m/%Y %H:%M'),
+      loot.created_at.strftime('%d/%m/%Y %H:%M'),
       loot.character.id_user
     ])
   

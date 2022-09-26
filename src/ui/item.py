@@ -26,14 +26,14 @@ class LootListEmbed(ListEmbed):
   def _item_desc(self, index, item: Loot):
     loot = item
     desc = f"`{index+1}` "
-    if loot.count > 1:
-      desc += f"**{loot.count}x** "
+    if loot.in_dkp:
+      desc += ":lock: " 
     if self._show_ids:
       desc += f"`[{loot.item.id}]` "
     desc += f"{localized_attr(loot.item, 'name')}"
     if loot.item.metadata_["Flags"] & 0x8:
       desc += " (H)"
-    datetime_to_display = loot.updated_at if loot.updated_at is not None else loot.created_at
+    datetime_to_display = loot.created_at
     desc += f" - {datetime_to_display.strftime('%d/%m/%Y')}"
     return desc
 

@@ -112,15 +112,14 @@ class UserRecipe(Base):
 
 class Loot(Base):
   __tablename__ = "loot"
-  id_character = Column(Integer, ForeignKey("character.id", ondelete="CASCADE"), primary_key=True)
-  id_item = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), primary_key=True)
+  id = Column(Integer, primary_key=True, autoincrement=True)
+  id_character = Column(Integer, ForeignKey("character.id", ondelete="CASCADE"), nullable=False)
+  id_item = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), nullable=False)
   in_dkp = Column(Boolean, default=False, nullable=False)
-  count = Column(Integer, default=1)
   created_at = Column(DateTime, default=utcnow)
-  updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
   character = relationship("Character", lazy="joined")
-  item = relationship("Item", lazy="joined") 
+  item = relationship("Item", lazy="joined")
 
 
 class GuildCharter(Base):

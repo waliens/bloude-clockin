@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from discord import InvalidArgument
-from sqlalchemy import or_, select, Integer, delete
+from sqlalchemy import or_, select, Integer, delete, func, not_
 from db_util.character import get_character
 from db_util.wow_data import InventorySlotEnum
 from models import Character, Item, Loot, Recipe, UserRecipe
@@ -65,19 +65,22 @@ async def items_search(sess, name: str=None, _id: int=None, max_items: int=-1, m
 async def register_loot(sess, item_id, character_id, in_dkp=False, commit=True):
   """Register a loot for the given character"""
   try:
-    loot = await sess.get(Loot, {"id_item": item_id, "id_character": character_id})
-    if loot is None:
-      new_loot = Loot(id_item=item_id, id_character=character_id, count=1, in_dkp=in_dkp)
+    item = await sess.get(Item, item_id)
+    maxcount = int(item.metadata_["maxcount"])
+
+    cnt_query = select(func.count(Loot.id)).where(Loot.id_item == item_id, Loot.id_character == character_id)
+    cnt_res = await sess.execute(cnt_query)
+    loot_count = cnt_res.scalar()
+   
+    if maxcount == 0 or loot_count < maxcount:
+      new_loot = Loot(id_item=item_id, id_character=character_id, in_dkp=in_dkp)
       sess.add(new_loot)
     else:
-      maxcount = int(loot.item.metadata_["maxcount"])
-      if maxcount == 0 or loot.count < maxcount:
-        loot.count += 1
-      else:
-        raise InvalidArgument(_t("loot.invalid.toomany", count=maxcount))
+      raise InvalidArgument(_t("loot.invalid.toomany", count=maxcount))
+
     if commit:
       await sess.commit()
-  except IntegrityError:
+  except IntegrityError as e:
     raise InvalidArgument(_t("item.invalid.alreadyrecorded"))
 
 
@@ -136,6 +139,24 @@ async def fetch_loots(sess, character_id: int, slot: InventorySlotEnum=None, max
   result = await sess.execute(query)
   return result.scalars().all()
 
+
+async def remove_loots(sess, character_id: int, item_id: int, only_last=True, force_remove_in_dkp=False):
+  where_clause = [
+    Loot.id_character == character_id, 
+    Loot.id_item == item_id
+  ]
+  if not force_remove_in_dkp:
+    where_clause.append(not_(Loot.in_dkp))
+  if only_last:
+    where_clause = [Loot.id.in_(select(Loot.id).where(*where_clause).order_by(Loot.created_at.desc()).limit(1))]
+
+  query = select(Loot).where(*where_clause)
+  results = await sess.execute(query)
+  loots = results.scalars().all()
+
+  for loot in loots:
+    await sess.delete(loot)
+  
 
 async def get_crafters(sess, recipe_ids):
   # get recipes
