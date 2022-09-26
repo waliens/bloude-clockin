@@ -161,6 +161,7 @@ loot.list.error,"Cannot list loots: {error}.","Impossible de lister les loots: {
 loot.list.ui.loots,"Loots","Loots"
 prio.gsheet.col.id,"ID","ID"
 prio.gsheet.col.name,"Name","Nom"
+prio.gsheet.col.ilvl,"ilvl","ilvl"
 prio.gsheet.col.bis,"Best in slot","Best in slot"
 prio.gsheet.col.almost_bis,"Almost BIS","Presque BIS"
 prio.gsheet.col.average,"Average","Moyen"

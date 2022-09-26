@@ -33,7 +33,7 @@ class DefaultDKPSystem(AbstrackDKPSystem):
       return 5
 
 
-async def compute_dkp_score(sess, character: Character, item_prios: dict, dkp_system: AbstrackDKPSystem=None):
+async def compute_dkp_score(sess, character: Character, priorities: dict, dkp_system: AbstrackDKPSystem=None):
   if dkp_system is None:
     dkp_system = DefaultDKPSystem()
   
@@ -46,7 +46,9 @@ async def compute_dkp_score(sess, character: Character, item_prios: dict, dkp_sy
 
   dkp = 0
   for loot in dkp_loots:
-    priority_list = item_prios[loot.id_item].priority_list
+    if loot.id_item not in priorities:
+      continue 
+    priority_list = priorities[loot.id_item].priority_list
     tier = priority_list.get_priority_tier(character_role)
     dkp += dkp_system.get_loot_points(loot, tier)
 

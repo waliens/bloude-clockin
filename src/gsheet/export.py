@@ -1,11 +1,12 @@
 import pygsheets
 
 from collections import defaultdict
-from pygsheets import Spreadsheet, Worksheet
+from pygsheets import Spreadsheet, Worksheet, Cell, DataRange
 from discord import InvalidArgument
 from sqlalchemy import select
 from db_util.dkp import compute_dkp_score
 from db_util.priorities import PrioTierEnum, generate_prio_str_for_item
+from db_util.wow_data import ItemInventoryTypeEnum
 from gsheet_helpers import get_creds
 from models import Character, GuildSettings, Item, Loot
 from pycord18n.extension import _ as _t
@@ -27,6 +28,7 @@ def create_worksheet(sheet: Spreadsheet, name: str, table) -> Worksheet:
     idx = [wk.title for wk in worksheets].index(name)
     worksheet = worksheets[idx]
     worksheet.clear(fields="*")
+    DataRange(worksheet=worksheet).merge_cells(merge_type='NONE')
   except ValueError:
     worksheet = sheet.add_worksheet(name)
 
@@ -102,7 +104,7 @@ async def export_in_worksheets(sess, guild_id):
   return chr_worksheet, lts_worksheet
 
 
-async def generate_character_prio_sheet(sess, sheet, id_guild, items: dict, role2name: dict):
+async def generate_character_prio_sheet(sess, sheet, id_guild, priorities: dict, role2name: dict):
   """
   Parameters
   ----------
@@ -110,7 +112,7 @@ async def generate_character_prio_sheet(sess, sheet, id_guild, items: dict, role
     The worksheet will be generated/replaced here
   id_guild: [int|str]
     Guild identifierµ
-  items: Mapping[int,ItemWithPriority]
+  priorities: Mapping[int,ItemWithPriority]
   role2name: Mapping[tuple,str]
     Maps role tuples with its str name 
   """
@@ -120,28 +122,61 @@ async def generate_character_prio_sheet(sess, sheet, id_guild, items: dict, role
   characters = results.scalars().all()
   char_dict = defaultdict(list)
   for char in characters:
-    char_dkp = await compute_dkp_score(sess, char, items)
+    char_dkp = await compute_dkp_score(sess, char, priorities)
     char_dict[(char.character_class, char.role, char.spec)].append((char, char_dkp))
 
   # generate sheet table 
   sheet_table = list()
   sheet_table.append([
     _t("prio.gsheet.col.id"), 
-    _t("prio.gsheet.col.name"), 
-    _t("prio.gsheet.col.bis"), 
+    _t("prio.gsheet.col.name"),
+    _t("prio.gsheet.col.ilvl"), 
+    _t("prio.gsheet.col.bis"),
     _t("prio.gsheet.col.almost_bis"), 
     _t("prio.gsheet.col.average"), 
     _t("prio.gsheet.col.is_up")
   ])
   
-  for item_id, item_with_priority in items.items():
+  item_index = dict()
+  per_slot = defaultdict(list)
+
+  for item_id in priorities.keys():
     item = await sess.get(Item, item_id)
     if item is None:
-      continue 
-    prio_dict = await generate_prio_str_for_item(sess, id_guild, item_with_priority, role2name, char_dict)
-    if len(prio_dict) == 0:
       continue
-    item_descriptor = [item.id, localized_attr(item, 'name')] + [prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()]
-    sheet_table.append(item_descriptor)
+    item_index[item_id] = item
+    inventory_type = ItemInventoryTypeEnum(item.metadata_["InventoryType"])
+    per_slot[inventory_type.get_slot()].append(item_id)
   
-  create_worksheet(sheet, name="gci_prio", table=sheet_table)
+  slot_header_cell_merges = list()
+  for slot, item_ids in per_slot.items():
+    current_row = len(sheet_table) + 1
+    slot_header_cell_merges.append(current_row)
+
+    if slot is not None:
+      sheet_table.append([slot.name_hr])
+    else:
+      sheet_table.append([ItemInventoryTypeEnum.NON_EQUIPABLE.name_hr])
+
+    for item_id in item_ids:
+      item = item_index[item_id]
+      prio_dict = await generate_prio_str_for_item(sess, id_guild, priorities[item_id], role2name, char_dict)
+      item_descriptor = [item.id, localized_attr(item, 'name'), item.metadata_["ItemLevel"]] + [prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()]
+      sheet_table.append(item_descriptor)
+
+  wks = create_worksheet(sheet, name="gci_prio", table=sheet_table)
+
+  # formatting
+  reference_style_cell = Cell("A1", worksheet=wks)
+  reference_style_cell.color = (0.576, 0.769, 0.49, 0)
+
+  for row_number in slot_header_cell_merges:
+    row = wks.get_row(row_number, returnas="range")
+    row.merge_cells()
+    row.apply_format(reference_style_cell, fields="userEnteredFormat.backgroundColor")
+
+  reference_style_cell.color = (0.22, 0.463, 0.114, 0)
+  reference_style_cell.set_text_format("bold", True)
+  reference_style_cell.set_text_format("foregroundColor", (1, 1, 1, 0))
+  wks.get_row(1, returnas="range").apply_format(reference_style_cell)
+    
