@@ -7,15 +7,19 @@ from models import Character, Loot
 
 
 class ParseError(Exception):
-  def __init__(self, row, col, parent=None) -> None:
+  def __init__(self, row, col, parent=None, ws=None) -> None:
     super().__init__(parent)
     self._parent = parent
     self._row = row
     self._col = col
-    self._cell = Cell((row, col))
+    self._ws = ws
+    self._cell = Cell((row, col), worksheet=ws)
   
   def __str__(self) -> str:
-    return f"Error in cell '{self._cell.label}': {str(self._parent)}."
+    cell_addr = f"{self._cell.label}"
+    if self._ws is not None:
+      cell_addr = f"'{self._ws.title}'!" + cell_addr
+    return f"cell \"{cell_addr}\": {str(self._parent)}."
   
   @property
   def row(self):
@@ -26,12 +30,13 @@ class ParseError(Exception):
     return self._col
 
   @property
-  def sheet_name(self):
-    return self._sheet_name
+  def worksheet(self):
+    return self._ws
   
-  @sheet_name.setter
-  def sheet_name(self, value):
-    self._sheet_name = value
+  @worksheet.setter
+  def worksheet(self, value):
+    self._cell = Cell((self._row, self._col), worksheet=value)  
+    self._ws = value
 
 
 class PriorityError(Exception):

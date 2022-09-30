@@ -23,7 +23,9 @@ class PrioParser(object):
         raise ParseError("duplicate items in different sheets")
       for k, v in new_items.items():
         self._item_prio[k] = v
-      self._errors.extend(ws_errors.values())
+      for ws_error in ws_errors.values():
+        ws_error.worksheet = ws
+        self._errors.append(ws_error)
 
   @property
   def items(self):

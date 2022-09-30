@@ -4,6 +4,7 @@ from pycord18n.extension import _ as _t, I18nExtension
 from gsheet.export import export_in_worksheets
 from gsheet_helpers import SheetStateEnum, check_sheet, make_bot_guser_name
 from models import GuildSettings
+from ui.gsheet import SheetParserErrorsEmbed
 
 
 class SettingsCog(commands.Cog):
@@ -122,8 +123,12 @@ class SettingsCog(commands.Cog):
       async with ctx.bot.db_session_class() as sess:
         async with sess.begin():
           await ctx.defer(ephemeral=True)
-          await export_in_worksheets(sess, str(ctx.guild.id))
-          await ctx.respond(_t("settings.gsheet.export.success"), ephemeral=True)
+          _, _, _, _, parser = await export_in_worksheets(sess, str(ctx.guild.id))
+          if len(parser.errors) == 0:
+            await ctx.respond(_t("settings.gsheet.export.success"), ephemeral=True)
+          else:
+            errors_embed = SheetParserErrorsEmbed(parser.errors)
+            await ctx.respond(embed=errors_embed)
     except InvalidArgument as e:
       await ctx.respond(_t("settings.gsheet.export.error", error=str(e)), ephemeral=True)
 

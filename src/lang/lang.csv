@@ -47,6 +47,7 @@ general.invalid.date,"cannot parse date, should be in format 'DD/MM/YYYY'","impo
 general.ui.list.empty,"No result.","Pas de résultat."
 general.ui.list.matching,"Matches:","Correspondances:"
 general.ui.list.toomany,"Too many elements, only displaying {count}.","Trop d'éléments, seuls {count} sont affichés."
+gsheet.errors.ui.title,"Parsing errors","Erreur de parsing" 
 help.character.create.desc,"Add a new character.","Ajouter un nouveau personnage."
 help.character.create.option.character_class,"The character's class.","La classe du personnage."
 help.character.create.option.for_user,"The discord user on behalf of whom the character should be added (by default, the user who runs the command).","L'utilisateur discord pour qui le personnage doit être ajouté (par défaut, l'utilisateur qui lance la commande)."

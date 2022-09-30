@@ -7,6 +7,7 @@ from sqlalchemy import select
 from db_util.dkp import compute_dkp_score
 from db_util.priorities import PrioTierEnum, generate_prio_str_for_item
 from db_util.wow_data import ItemInventoryTypeEnum
+from gsheet.parse_priorities import PrioParser
 from gsheet_helpers import get_creds
 from models import Character, GuildSettings, Item, Loot
 from pycord18n.extension import _ as _t
@@ -87,24 +88,7 @@ async def create_loot_table(sess, guild_id):
   return table
 
 
-async def export_in_worksheets(sess, guild_id):
-  settings = await sess.get(GuildSettings, guild_id)
-
-  if settings is None or settings.id_export_gsheet is None:
-    raise InvalidArgument(_t("settings.gsheet.invalid.notconfigured"))
-
-  gc = pygsheets.authorize(custom_credentials=get_creds())
-  full_sheet = gc.open_by_key(settings.id_export_gsheet)
-  
-  characters_table = await create_characters_table(sess, guild_id)
-  chr_worksheet = create_worksheet(full_sheet, "gci_characters", characters_table)
-  loots_table = await create_loot_table(sess, guild_id)
-  lts_worksheet = create_worksheet(full_sheet, "gci_loots", loots_table)
-
-  return chr_worksheet, lts_worksheet
-
-
-async def generate_prio_sheets(sess, sheet, id_guild, priorities: dict, role2name: dict, per_class=False):
+async def generate_prio_sheets(sess, gc, sheet, id_guild, priorities: dict, role2name: dict, per_class=False):
   """
   Parameters
   ----------
@@ -114,7 +98,7 @@ async def generate_prio_sheets(sess, sheet, id_guild, priorities: dict, role2nam
     Guild identifierµ
   priorities: Mapping[int,ItemWithPriority]
   role2name: Mapping[tuple,str]
-    Maps role tuples with its str name 
+    Maps role tuples with its str name
   """
   # read main characters list
   query = select(Character).where(Character.is_main == True, Character.id_guild == id_guild)
@@ -174,9 +158,11 @@ async def generate_prio_sheets(sess, sheet, id_guild, priorities: dict, role2nam
       per_char_sheet_table.append(row_header + [per_char_prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()])
 
   # actually generate the sheet
+  wksheets = list()
   for sheet_name, sheet_table in [("gci_prio", per_char_sheet_table), ("gci_prio_class", per_class_sheet_table)]: 
     wks = create_worksheet(sheet, name=sheet_name, table=sheet_table)
-
+    wksheets.append(wks)
+    gc.set_batch_mode(True)
     # formatting
     reference_style_cell = Cell("A1", worksheet=wks)
     reference_style_cell.color = (0.576, 0.769, 0.49, 0)
@@ -190,4 +176,28 @@ async def generate_prio_sheets(sess, sheet, id_guild, priorities: dict, role2nam
     reference_style_cell.set_text_format("bold", True)
     reference_style_cell.set_text_format("foregroundColor", (1, 1, 1, 0))
     wks.get_row(1, returnas="range").apply_format(reference_style_cell)
-    
+    gc.run_batch()
+    gc.set_batch_mode(False)
+  
+  return wksheets
+
+
+async def export_in_worksheets(sess, guild_id):
+  settings = await sess.get(GuildSettings, guild_id)
+
+  if settings is None or settings.id_export_gsheet is None:
+    raise InvalidArgument(_t("settings.gsheet.invalid.notconfigured"))
+
+  gc = pygsheets.authorize(custom_credentials=get_creds())
+  full_sheet = gc.open_by_key(settings.id_export_gsheet)
+  
+  characters_table = await create_characters_table(sess, guild_id)
+  chr_worksheet = create_worksheet(full_sheet, "gci_characters", characters_table)
+  loots_table = await create_loot_table(sess, guild_id)
+  lts_worksheet = create_worksheet(full_sheet, "gci_loots", loots_table)
+
+  # parse prio
+  prio_parser = PrioParser(full_sheet)
+  char_prio_sheet, class_prio_sheet = await generate_prio_sheets(sess, gc, full_sheet, guild_id, prio_parser._item_prio, prio_parser._role2name)
+
+  return chr_worksheet, lts_worksheet, char_prio_sheet, class_prio_sheet, prio_parser
