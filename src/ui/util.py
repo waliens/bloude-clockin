@@ -39,6 +39,22 @@ class CancelButton(Button):
     return await interaction.response.edit_message(content=_t("general.cancelled"), view=None, embed=None)
 
 
+class ConfirmButton(Button):
+  def __init__(self, confirm_callback=None, *args, **kwargs):
+    super().__init__(style=ButtonStyle.primary, label=_t("general.confirm"), *args, **kwargs)
+    self._confirm_callback = confirm_callback
+
+  @property
+  def confirm_callback(self):
+    return self._confirm_callback
+  
+  @confirm_callback.setter
+  def confirm_callback(self, clbk):
+    self._confirm_callback = clbk
+
+  async def callback(self, interaction: Interaction):
+    await self._confirm_callback(interaction)
+
 
 class EmbedFieldEditorModal(Modal):
   def __init__(self, 
@@ -187,3 +203,45 @@ class ListSelectorView(View):
   @abstractmethod
   def error_message(self, error: InvalidArgument):
     pass
+
+
+class MultiSelectView(View):
+  def __init__(self, bot, selects, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._bot = bot
+    self._selects = selects
+    self._cancel_button = CancelButton()
+
+    async def _confirm_callback(interaction: Interaction):
+      try:
+        self.disable_all_items()
+        await self.confirm_callback(*[select.values for select in self._selects])
+        self.stop()
+        self.clear_items()
+        await interaction.response.edit_message(**self.success_message())
+      except InvalidArgument as e:
+        self.enable_all_items()
+        return await interaction.response.edit_message(**self.error_message(e))
+      
+    self._validate_button = ConfirmButton(confirm_callback=_confirm_callback)
+
+    for select in self._selects:
+      self.add_item(select)
+    self.add_item(self._validate_button)
+    self.add_item(self._cancel_button)
+
+  @abstractmethod
+  async def confirm_callback(self, *values):
+    pass
+
+  @abstractmethod
+  def success_message(self):
+    pass
+
+  @abstractmethod
+  def error_message(self, error: InvalidArgument):
+    pass
+
+  @property
+  def bot(self):
+    return self._bot 

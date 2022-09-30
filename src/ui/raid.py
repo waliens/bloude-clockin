@@ -1,50 +1,38 @@
 import datetime
-from discord.ui import View, Button
-from discord import Interaction, InvalidArgument, SelectOption
-from db_util.attendance import record_attendance
-from ui.util import DeferSelect, EnumSelect
+from discord import SelectOption, InvalidArgument
+from ui.util import DeferSelect, EnumSelect, MultiSelectView
 from db_util.wow_data import RaidSizeEnum
+from db_util.raid import update_raid_reset
+
+from pycord18n.extension import _ as _t
+
 
 class RaidSelect(DeferSelect):
   def _item2option(self, item):
-     return SelectOption(label=item.name, value=str(item.id))
+    return SelectOption(label=item.name, value=str(item.id))
 
+
+class RaidSelectView(MultiSelectView):
+  def __init__(self, bot, raids, *args, **kwargs):
+    self._raid_select = RaidSelect(raids)
+    self._size_select = EnumSelect(RaidSizeEnum)
+    super().__init__(bot, [self._raid_select, self._size_select], *args, **kwargs)
+
+
+class ResetUpdateRaidSelectView(MultiSelectView):
+  def __init__(self, bot, raids, reset_datetime: datetime.datetime, *args, **kwargs):
+    self._raid_select = RaidSelect(raids)
+    super().__init__(bot, [self._raid_select], *args, **kwargs)
+    self._reset_datetime = reset_datetime
   
-class RaidSelectorModal(View):
-  def __init__(self, bot, raids, id_character: int, raid_datetime: datetime.datetime, *args, **kwargs) -> None:
-    super().__init__(*args, **kwargs)
-    self._id_character = id_character
-    self._raid_datetime = raid_datetime
-    self._bot = bot
+  async def confirm_callback(self, *values):
+    raid_id = int(values[0][0])
+    async with self.bot.db_session_class() as sess:
+      async with sess.begin():
+        await update_raid_reset(sess, id_raid=raid_id, reset=self._reset_datetime)
 
-    self._raid_selector = RaidSelect(raids)
-    self._raid_size_selector = EnumSelect(RaidSizeEnum)
-    self._button = Button(label="Confirm")
+  def success_message(self):
+    return {"content": _t("raid.reset.update.success"), "embed": None, "view": None}
 
-    async def button_callback(interaction: Interaction):
-
-      try:
-        async with self._bot.db_session_class() as sess:
-          async with sess.begin():
-            await record_attendance(
-              sess, 
-              id_character=self._id_character, 
-              raid_datetime=self._raid_datetime, 
-              raid_size=RaidSizeEnum[self._raid_size_selector.values[0]], 
-              id_raid=int(self._raid_selector.values[0]))
-            
-        self.disable_all_items()
-        self.stop()
-        await interaction.response.send_message(f"The character is now locked in the selected raid.", ephemeral=True)
-        
-      except InvalidArgument as e:
-        return await interaction.response.send_message(f"Cannot lock the character: {str(e)}.", ephemeral=True)
-
-    self._button.callback = button_callback
-
-    self.add_item(self._raid_selector)
-    self.add_item(self._raid_size_selector)
-    self.add_item(self._button)
-
-
-  
+  def error_message(self, error: InvalidArgument):
+    return {"content": _t("raid.reset.update.error", error=str(error)), "embed": None, "view": None}
