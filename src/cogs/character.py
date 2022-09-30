@@ -87,10 +87,10 @@ class CharacterCog(commands.Cog):
             async def click_callback(spec: SpecEnum):
               async with self.bot.db_session_class() as sess:
                 async with sess.begin():
-                  character = await update_character(sess, user_id, guild_id, name, new_name, is_main=is_main, role=role, spec=spec, character_class=character_class)
+                  character = await update_character(sess, user_id, guild_id, name, new_name, is_main=is_main, role=final_role, spec=spec, character_class=final_class)
                   return _t("character.update.success", name=character.name, is_main=character.is_main)
 
-            view = SpecSelectionView(click_callback, character_class, role)
+            view = SpecSelectionView(click_callback, final_class, final_role)
             await ctx.respond(view=view, ephemeral=True)
           
           else:

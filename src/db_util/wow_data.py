@@ -314,6 +314,10 @@ class ClassEnum(HumanReadableEnum):
       return [SpecEnum.SHAMAN_ENHANCE, SpecEnum.SHAMAN_SPELLHANCE]
     elif self == self.WARLOCK and role == RoleEnum.RANGED_DPS:
       return [SpecEnum.WARLOCK_AFFLI, SpecEnum.WARLOCK_DEMONO]
+    elif self == self.PRIEST and role == RoleEnum.HEALER:
+      return [SpecEnum.PRIEST_DISC, SpecEnum.PRIEST_HOLY]
+    elif self == self.DEATH_KNIGHT and role == RoleEnum.MELEE_DPS:
+      return [SpecEnum.DK_FROST, SpecEnum.DK_UNHOLY]
     else:
       return []
 
@@ -334,6 +338,10 @@ class SpecEnum(HumanReadableEnum):
   WARLOCK_DEMONO = 4
   ROGUE_COMBAT = 5
   ROGUE_ASSA = 6
+  DK_UNHOLY = 7
+  DK_FROST = 8
+  PRIEST_HOLY = 9
+  PRIEST_DISC = 10
 
   @property
   def i18n_prefix(self):
@@ -353,6 +361,14 @@ class SpecEnum(HumanReadableEnum):
       return ClassEnum.ROGUE
     elif self == self.ROGUE_ASSA:
       return ClassEnum.ROGUE
+    elif self == self.DK_UNHOLY:
+      return ClassEnum.DEATH_KNIGHT
+    elif self == self.DK_FROST:
+      return ClassEnum.DEATH_KNIGHT
+    elif self == self.PRIEST_HOLY:
+      return ClassEnum.PRIEST
+    elif self == self.PRIEST_DISC:
+      return ClassEnum.PRIEST
     else:
       raise ValueError("unknown spec")
 
@@ -375,7 +391,8 @@ class SpecEnum(HumanReadableEnum):
 
   @staticmethod
   def has_spec(_class: ClassEnum, role: RoleEnum):
-    return _class == ClassEnum.ROGUE or (_class == ClassEnum.SHAMAN and role == RoleEnum.MELEE_DPS) or (_class == ClassEnum.WARLOCK and role == RoleEnum.RANGED_DPS) 
+    return _class == ClassEnum.ROGUE or (_class == ClassEnum.SHAMAN and role == RoleEnum.MELEE_DPS) or (_class == ClassEnum.WARLOCK and role == RoleEnum.RANGED_DPS) or \
+            (_class == ClassEnum.PRIEST and role == RoleEnum.HEALER) or (_class == ClassEnum.DEATH_KNIGHT and role == RoleEnum.MELEE_DPS) 
   
   def is_valid_for_class_role(self, _class: ClassEnum, role: RoleEnum):
     return self.role == role and self.character_class == _class
