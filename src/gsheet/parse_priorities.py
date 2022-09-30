@@ -1,7 +1,7 @@
 
-from pygsheets import Spreadsheet, Worksheet
+from pygsheets import Spreadsheet, Worksheet, Cell
 from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
-from db_util.priorities import ItemWithPriority, ParseError, PrioTierEnum, PriorityList, SepEnum, enum_get
+from db_util.priorities import ItemWithPriority, ParseError, PriorityError, PriorityList, SepEnum, enum_get
 
 
 class PrioParser(object):
@@ -13,19 +13,25 @@ class PrioParser(object):
     self._name2role = self._parse_roles()
     self._role2name = {v: k for k, v in self._name2role.items()}
     self._item_prio = dict()
+    self._errors = list()
     for ws in gsheet.worksheets():
       if not ws.title.startswith(self.PRIO_SHEET_TITLE_PREFIX):
         continue
-      new_items = self._read_prio_sheet(ws)
+      new_items, ws_errors = self._read_prio_sheet(ws)
       interesected_items = set(new_items.keys()).intersection(self._item_prio.keys())
       if len(interesected_items) > 0:
         raise ParseError("duplicate items in different sheets")
       for k, v in new_items.items():
         self._item_prio[k] = v
+      self._errors.extend(ws_errors.values())
 
   @property
   def items(self):
     return self._item_prio
+
+  @property
+  def errors(self):
+    return self._errors
 
   def __getitem__(self, index):
     return self._item_prio[int(index)]
@@ -57,29 +63,42 @@ class PrioParser(object):
     values = ws.get_all_values()
     headers = values[0]
     columns = {header: headers.index(header) for header in PRIO_COLUMNS}
-
+    errors = dict()
     items = dict()
-    for row in values[1:]:
-      if len(row[columns["id"]].strip()) == 0:
-        continue
-      item_id = int(row[columns["id"]])
-      
-      priorities = list()
-      for curr_item in row[6:]:
-        value = None
-        if curr_item in self._name2role:
-          value = self._name2role[curr_item]
-        elif SepEnum.is_valid(curr_item):
-          value = curr_item
-        priorities.append(value)
+    row_offset, col_offset = 1, 6
+    for row_index, row in enumerate(values[row_offset:]):
+      try:
+        if len(row[columns["id"]].strip()) == 0:
+          continue
+        item_id = int(row[columns["id"]])
+        
+        priorities = list()
+        for col_index, curr_item in enumerate(row[col_offset:]):
+          value = None
+          if curr_item in self._name2role:
+            value = self._name2role[curr_item]
+          elif SepEnum.is_valid(curr_item):
+            value = curr_item
+          elif len(curr_item.strip()) > 0:
+            raise ParseError(
+              row_index + row_offset, 
+              col_index + col_offset,
+              f"unknown symbol '{curr_item}'"
+            )
+          priorities.append(value)
 
-      items[item_id] = ItemWithPriority(
-        item_id=item_id,
-        priority_list=PriorityList(priorities),
-        boss=row[columns["boss"]]
-      )
-    
-    return items
+        items[item_id] = ItemWithPriority(
+          item_id=item_id,
+          priority_list=PriorityList(priorities),
+          boss=row[columns["boss"]]
+        )
+      except ParseError as e:
+        errors[e.row] = e
+      except PriorityError as e:
+        abs_row = row_index + row_offset
+        errors[abs_row] = ParseError(abs_row, col_offset + e.col_index, parent=e)
+
+    return items, errors
 
   @property
   def name2role(self):

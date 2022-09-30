@@ -104,7 +104,7 @@ async def export_in_worksheets(sess, guild_id):
   return chr_worksheet, lts_worksheet
 
 
-async def generate_character_prio_sheet(sess, sheet, id_guild, priorities: dict, role2name: dict):
+async def generate_prio_sheets(sess, sheet, id_guild, priorities: dict, role2name: dict, per_class=False):
   """
   Parameters
   ----------
@@ -119,6 +119,7 @@ async def generate_character_prio_sheet(sess, sheet, id_guild, priorities: dict,
   # read main characters list
   query = select(Character).where(Character.is_main == True, Character.id_guild == id_guild)
   results = await sess.execute(query)
+
   characters = results.scalars().all()
   char_dict = defaultdict(list)
   for char in characters:
@@ -126,8 +127,9 @@ async def generate_character_prio_sheet(sess, sheet, id_guild, priorities: dict,
     char_dict[(char.character_class, char.role, char.spec)].append((char, char_dkp))
 
   # generate sheet table 
-  sheet_table = list()
-  sheet_table.append([
+  per_class_sheet_table = list()
+  per_char_sheet_table = list()
+  headers = [
     _t("prio.gsheet.col.id"), 
     _t("prio.gsheet.col.name"),
     _t("prio.gsheet.col.ilvl"), 
@@ -135,7 +137,9 @@ async def generate_character_prio_sheet(sess, sheet, id_guild, priorities: dict,
     _t("prio.gsheet.col.almost_bis"), 
     _t("prio.gsheet.col.average"), 
     _t("prio.gsheet.col.is_up")
-  ])
+  ]
+  per_class_sheet_table.append(headers)
+  per_char_sheet_table.append(headers)
   
   item_index = dict()
   per_slot = defaultdict(list)
@@ -150,33 +154,40 @@ async def generate_character_prio_sheet(sess, sheet, id_guild, priorities: dict,
   
   slot_header_cell_merges = list()
   for slot, item_ids in per_slot.items():
-    current_row = len(sheet_table) + 1
+    current_row = len(per_class_sheet_table) + 1
     slot_header_cell_merges.append(current_row)
 
     if slot is not None:
-      sheet_table.append([slot.name_hr])
+      per_class_sheet_table.append([slot.name_hr])
+      per_char_sheet_table.append([slot.name_hr])
     else:
-      sheet_table.append([ItemInventoryTypeEnum.NON_EQUIPABLE.name_hr])
+      per_class_sheet_table.append([ItemInventoryTypeEnum.NON_EQUIPABLE.name_hr])
+      per_char_sheet_table.append([ItemInventoryTypeEnum.NON_EQUIPABLE.name_hr])
 
     for item_id in item_ids:
       item = item_index[item_id]
-      prio_dict = await generate_prio_str_for_item(sess, id_guild, priorities[item_id], role2name, char_dict)
-      item_descriptor = [item.id, localized_attr(item, 'name'), item.metadata_["ItemLevel"]] + [prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()]
-      sheet_table.append(item_descriptor)
+      row_header = [item.id, localized_attr(item, 'name'), item.metadata_["ItemLevel"]]
+      # per_class
+      per_class_prio_dict = await generate_prio_str_for_item(sess, id_guild, priorities[item_id], role2name)
+      per_class_sheet_table.append(row_header + [per_class_prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()])
+      per_char_prio_dict = await generate_prio_str_for_item(sess, id_guild, priorities[item_id], role2name, char_dict)
+      per_char_sheet_table.append(row_header + [per_char_prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()])
 
-  wks = create_worksheet(sheet, name="gci_prio", table=sheet_table)
+  # actually generate the sheet
+  for sheet_name, sheet_table in [("gci_prio", per_char_sheet_table), ("gci_prio_class", per_class_sheet_table)]: 
+    wks = create_worksheet(sheet, name=sheet_name, table=sheet_table)
 
-  # formatting
-  reference_style_cell = Cell("A1", worksheet=wks)
-  reference_style_cell.color = (0.576, 0.769, 0.49, 0)
+    # formatting
+    reference_style_cell = Cell("A1", worksheet=wks)
+    reference_style_cell.color = (0.576, 0.769, 0.49, 0)
 
-  for row_number in slot_header_cell_merges:
-    row = wks.get_row(row_number, returnas="range")
-    row.merge_cells()
-    row.apply_format(reference_style_cell, fields="userEnteredFormat.backgroundColor")
+    for row_number in slot_header_cell_merges:
+      row = wks.get_row(row_number, returnas="range")
+      row.merge_cells()
+      row.apply_format(reference_style_cell, fields="userEnteredFormat.backgroundColor")
 
-  reference_style_cell.color = (0.22, 0.463, 0.114, 0)
-  reference_style_cell.set_text_format("bold", True)
-  reference_style_cell.set_text_format("foregroundColor", (1, 1, 1, 0))
-  wks.get_row(1, returnas="range").apply_format(reference_style_cell)
+    reference_style_cell.color = (0.22, 0.463, 0.114, 0)
+    reference_style_cell.set_text_format("bold", True)
+    reference_style_cell.set_text_format("foregroundColor", (1, 1, 1, 0))
+    wks.get_row(1, returnas="range").apply_format(reference_style_cell)
     

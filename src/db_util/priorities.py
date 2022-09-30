@@ -1,27 +1,62 @@
 from collections import defaultdict
 from enum import Enum
+from pygsheets import Cell
 from sqlalchemy import select
 
 from models import Character, Loot
 
 
 class ParseError(Exception):
-  pass
+  def __init__(self, row, col, parent=None) -> None:
+    super().__init__(parent)
+    self._parent = parent
+    self._row = row
+    self._col = col
+    self._cell = Cell((row, col))
+  
+  def __str__(self) -> str:
+    return f"Error in cell '{self._cell.label}': {str(self._parent)}."
+  
+  @property
+  def row(self):
+    return self._row
+
+  @property
+  def col(self):
+    return self._col
+
+  @property
+  def sheet_name(self):
+    return self._sheet_name
+  
+  @sheet_name.setter
+  def sheet_name(self, value):
+    self._sheet_name = value
 
 
-class PriorityError(ParseError):
-  pass
+class PriorityError(Exception):
+  def __init__(self, col_index, desc, *args):
+    super().__init__(desc, *args)
+    self._col_index = col_index
+  
+  @property
+  def col_index(self):
+    return self._col_index
 
 
 class InvalidSepError(PriorityError):
-  def __init__(self, sep, *args: object) -> None:
-    super().__init__(f"expected separator, got '{sep}'", *args)
+  def __init__(self, col_index, sep, *args) -> None:
+    super().__init__(col_index, f"expected separator, got '{sep}'", *args)
     self._sep = sep
+
+  @property
+  def sep(self):
+    return self._sep
 
 
 class DuplicateRoleError(PriorityError):
-  def __init__(self, duplicate, *args) -> None:
-    super().__init__(f"duplicate role {duplicate}", *args)
+  def __init__(self, col_index, duplicate, *args) -> None:
+    super().__init__(col_index, f"duplicate role {duplicate}", *args)
     self._duplicate = duplicate
 
   @property
@@ -91,10 +126,10 @@ class PriorityList(object):
             continue
           elif elem == SepEnum.BETTER.value:
             prios[curr_tier].append(set())
-          else: raise InvalidSepError(elem)
+          else: raise InvalidSepError(curr_index, elem)
         else:
           if elem in already_processed:
-            raise DuplicateRoleError(elem)
+            raise DuplicateRoleError(curr_index, elem)
           already_processed.add(elem)
           prios[curr_tier][-1].add(elem)
     return prios
