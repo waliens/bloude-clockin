@@ -185,10 +185,19 @@ async def get_character(session, id_guild, id_user, name=None):
   try:
     where_clause = [Character.id_guild == id_guild, Character.id_user == id_user]
     if name is not None:
-      where_clause.append(Character.name.ilike(f"%{name}%"))
+      where_clause.append(Character.name.ilike(f"{name}"))
     else:
       where_clause.append(Character.is_main)
     results = await session.execute(select(Character).where(*where_clause))
     return results.scalars().one()
   except NoResultFound as e:
     raise InvalidArgument(_t("character.invalid.unknownornomain"))
+  except MultipleResultsFound as e:
+    raise InvalidArgument(_t("character.invalid.multiplecharactersfound"))
+
+
+async def get_user_characters(sess, id_guild, id_user):
+  """get all the user's characters"""
+  query = select(Character).where(Character.id_guild == str(id_guild), Character.id_user == str(id_user))
+  results = await sess.execute(query)
+  return results.scalars().all()

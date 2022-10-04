@@ -2,10 +2,17 @@ import pytz
 import datetime
 
 from sqlalchemy.exc import NoResultFound
-from sqlalchemy import select
+from sqlalchemy import select, func
 from models import Attendance, Raid
 from discord import InvalidArgument
 from db_util.wow_data import RaidSizeEnum
+
+from pycord18n.extension import _ as _t
+
+
+class MultiInvalidArgument(InvalidArgument):
+  def __init__(self, *invalid_arguments) -> None:
+    super().__init__("\n".join([str(e) for e in invalid_arguments]))
 
 
 def get_reset_for_datetime(when: datetime.datetime, first_reset_start: datetime.datetime, first_reset_end: datetime.datetime, reset_period: int):
@@ -16,8 +23,49 @@ def get_reset_for_datetime(when: datetime.datetime, first_reset_start: datetime.
   diff = datetime.timedelta(days=number_of_resets * reset_period)
   return first_reset_start + diff, first_reset_end + diff
 
+
+async def add_or_update_attendance(sess, 
+  id_character: int, 
+  raid_datetime: datetime.datetime, 
+  raid: Raid, 
+  raid_size: RaidSizeEnum,
+  guild_event=False
+):
+  # check if character has already recorded an attendance
+  this_reset_start, this_reset_end = get_reset_for_datetime(raid_datetime, raid.reset_start, raid.first_reset_end, raid.reset_period)
+
+  check_query = select(Attendance).where(
+    Attendance.id_character == id_character,
+    Attendance.id_raid == raid.id,
+    Attendance.raid_size == raid_size,
+    Attendance.raid_datetime < this_reset_end,
+    Attendance.raid_datetime >= this_reset_start
+  )
+  check_result = await sess.execute(check_query)
+  attendance = check_result.scalars().one_or_none()
+
+  if attendance is None:
+    new_attendance = Attendance(
+      id_character=id_character,
+      id_raid=raid.id,
+      is_guild_event=guild_event,
+      raid_size=raid_size,
+      raid_datetime=raid_datetime,
+      cancelled=False,
+      created_at=datetime.datetime.now(tz=pytz.UTC).replace(tzinfo=None)
+    )
+
+    sess.add(new_attendance)
+  else:
+    if not guild_event:
+      raise InvalidArgument(_t("attendance.invalid.already_locked", reset_start=this_reset_start, reset_end=this_reset_end))
+    if guild_event and not attendance.is_guild_event: # update to a guild event if not yet
+      attendance.is_guild_event = guild_event
+      attendance.raid_datetime = raid_datetime
+
+
   
-async def record_attendance(session, id_character: int, raid_datetime: datetime.datetime, raid_size: RaidSizeEnum, id_raid: int):
+async def record_attendance(session, id_character: int, raid_datetime: datetime.datetime, raid_size: RaidSizeEnum, id_raid: int, do_commit=True):
   """
   Parameters
   ----------
@@ -31,7 +79,8 @@ async def record_attendance(session, id_character: int, raid_datetime: datetime.
     size of the raid
   id_raid: int
     The raid identifier
-  
+  do_commit: bool
+    To commit the transaction
   Returns
   -------
 
@@ -40,39 +89,51 @@ async def record_attendance(session, id_character: int, raid_datetime: datetime.
     raid = (await session.execute(select(Raid).where(Raid.id == id_raid))).scalars().one()
     
     if raid_datetime < raid.reset_start:
-      raise InvalidArgument("the given date is before the start of the expansion")
+      raise InvalidArgument(_t("attendance.invalid.raid_opens_later"))
 
-    # check if character has already recorded an attendance
-    this_reset_start, this_reset_end = get_reset_for_datetime(raid_datetime, raid.reset_start, raid.first_reset_end, raid.reset_period)
-
-    check_query = select(Attendance).where(
-      Attendance.id_character == id_character,
-      Attendance.id_raid == id_raid,
-      Attendance.raid_size == raid_size,
-      Attendance.raid_datetime < this_reset_end,
-      Attendance.raid_datetime >= this_reset_start
-    )
-
-    attendance_count = len((await session.execute(check_query)).scalars().all())
-
-    if attendance_count > 0:
-      raise InvalidArgument(f"this character is already locked for this raid and raid size for the current reset ({this_reset_start} > {this_reset_end})")
-    
-    # add new attendance
-    new_attendance = Attendance(
-      id_character=id_character,
-      id_raid=id_raid,
-      raid_size=raid_size,
+    await add_or_update_attendance(
+      sess=session, 
+      id_character=id_character, 
       raid_datetime=raid_datetime,
-      cancelled=False,
-      created_at=datetime.datetime.now(tz=pytz.UTC).replace(tzinfo=None)
-    )
+      raid=raid,
+      raid_size=raid_size,
+      guild_event=False)
 
-    session.add(new_attendance)
-    await session.commit()
+    if do_commit:
+      await session.commit()
 
   except NoResultFound as e:
-    raise InvalidArgument("unknown raid identifier")
+    raise InvalidArgument(_t("attendance.invalid.unknown_raid"))
+
+
+async def record_batch_attendance(sess, id_characters, raid_datetime: datetime.datetime, raid_size: RaidSizeEnum, id_raid: int, guild_event=True, do_commit=True):
+  """Returns a dictionnary of  
+  """
+  try:
+    raid = (await sess.execute(select(Raid).where(Raid.id == id_raid))).scalars().one()
+    
+    if raid_datetime < raid.reset_start:
+      raise InvalidArgument(_t("attendance.invalid.raid_opens_later"))
+
+    not_added = dict()
+    for id_character in id_characters:
+      try: 
+        await add_or_update_attendance(sess, 
+          id_character=id_character, 
+          raid_datetime=raid_datetime, 
+          raid=raid, 
+          raid_size=raid_size, 
+          guild_event=guild_event)
+      except InvalidArgument as e:
+        not_added[id_character] = e        
+    
+    if do_commit:
+      await sess.commit()
+
+    return not_added
+
+  except NoResultFound as e:
+    raise InvalidArgument(_t("attendance.invalid.unknown_raid"))
 
 
 async def fetch_attendances(session, id_character: int, date_from: datetime.date, date_to: datetime.date):
@@ -118,3 +179,4 @@ async def fetch_attendances(session, id_character: int, date_from: datetime.date
     actual_datetime_from, actual_datetime_to = datetime_from, datetime_to
 
   return valid_attendances, (actual_datetime_from, actual_datetime_to)
+
