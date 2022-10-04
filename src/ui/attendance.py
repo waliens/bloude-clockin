@@ -34,7 +34,7 @@ class AttendanceRaidSelectView(RaidSelectView):
     raid, size = raids[0], sizes[0]
     async with self.bot.db_session_class() as sess:
       async with sess.begin():
-        await record_attendance(sess, id_character=self._id_character, raid_datetime=self._raid_datetime, raid_size=RaidSizeEnum[raid], id_raid=int(size))
+        await record_attendance(sess, id_character=self._id_character, raid_datetime=self._raid_datetime, raid_size=RaidSizeEnum[size], id_raid=int(raid))
 
   def success_message(self):
     return {"content": _t("attendance.add.success"), "embed": None, "view": None}

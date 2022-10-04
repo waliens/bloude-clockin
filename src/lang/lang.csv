@@ -1,5 +1,5 @@
 key,en,fr
-attendance.add.locking_in,f"Locking character '{char_name}' at '{lock_time}' in raid:","Lock du personnage at '{lock_tile}' dans le raid:"
+attendance.add.locking_in,f"Locking character '{char_name}' at '{lock_time}' in raid:","Lock du personnage à '{lock_time}' dans le raid:"
 attendance.add.error,"Cannot register attendance: {error}.","Impossible d'enregistrer la participation: {error}."
 attendance.add.success,"Attendance registered.","Participation enregistrée."
 attendance.invalid.raid_helper_id,"invalid RaidHelper id","identifiant de RaidHelper invalide"
