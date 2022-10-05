@@ -3,13 +3,14 @@ from discord import SelectOption, InvalidArgument
 from ui.util import DeferSelect, EnumSelect, MultiSelectView
 from db_util.wow_data import RaidSizeEnum
 from db_util.raid import update_raid_reset
+from lang.util import localized_attr
 
 from pycord18n.extension import _ as _t
 
 
 class RaidSelect(DeferSelect):
   def _item2option(self, item):
-    return SelectOption(label=item.name, value=str(item.id))
+    return SelectOption(label=localized_attr(item, "name"), value=str(item.id))
 
 
 class RaidSelectView(MultiSelectView):
