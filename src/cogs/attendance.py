@@ -36,10 +36,10 @@ class AttendanceCog(commands.Cog):
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
           character = await get_character(sess, guild_id, user_id, name=char_name)
-          raids = await get_raids(sess)
+          raids = await get_raids(sess, active_only=True)
           view = AttendanceRaidSelectView(self.bot, raids, character.id, raid_datetime)
           await ctx.respond(
-            _t("attendance.add.locking_in", char_name=character.name, lock_at=raid_datetime.strftime('%d/%m/%Y %H:%M')), 
+            _t("attendance.add.locking_in", char_name=character.name, lock_time=raid_datetime.strftime('%d/%m/%Y %H:%M')), 
             view=view, 
             ephemeral=True
           )
@@ -62,7 +62,7 @@ class AttendanceCog(commands.Cog):
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
           when, chars, missing = await extract_raid_helpers_data(sess, raid_helper_id, guild_id)
-          raids = await get_raids(sess)
+          raids = await get_raids(sess, active_only=True)
           error_txt = ""
           if len(missing) > 0:
             error_txt = "- " + _t("attendance.invalid.cannot_add_for_users", user_list=",".join(missing))
