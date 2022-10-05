@@ -51,6 +51,7 @@ class Raid(Base):
   name_en = Column(String(255), unique=True)
   name_fr = Column(String(255), unique=True)
   short_name = Column(String(255), unique=True)
+  open_at = Column(DateTime, default=utcnow)  # opening date of the raid
   reset_period = Column(Integer)  # in days
   reset_start = Column(DateTime)  # date of the first reset (of the expansion)
 
