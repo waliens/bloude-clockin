@@ -8,7 +8,7 @@ from gsheet.export import export_in_worksheets
 from gsheet_helpers import SheetStateEnum, check_sheet, make_bot_guser_name
 from models import GuildSettings
 from ui.gsheet import SheetParserErrorsEmbed
-from ui.raid import ResetUpdateRaidSelectView
+from ui.raid import OpenAtUpdateRaidSelectView
 
 
 class SettingsCog(commands.Cog):
@@ -137,19 +137,19 @@ class SettingsCog(commands.Cog):
       await ctx.respond(_t("settings.gsheet.export.error", error=str(e)), ephemeral=True)
 
   # TODO make this only runnable by bot manager
-  @settings_group.command(description="Update the initial reset datetime for a raid.")
+  @settings_group.command(description="Update the initial open time for a raid.")
   @commands.has_permissions(administrator=True)
   @guild_only()
-  async def raid_reset(self, ctx, new_reset: Option(str, description="The new initial reset timer.")):
+  async def raid_open_time(self, ctx, new_open_time: Option(str, description="The raid open time.")):
     try:
-      new_reset = parse_datetime(new_reset)
+      new_open_time = parse_datetime(new_open_time)
       async with ctx.bot.db_session_class() as sess:
         async with sess.begin():
           raids = await get_raids(sess)
-          view = ResetUpdateRaidSelectView(ctx.bot, raids, new_reset)
+          view = OpenAtUpdateRaidSelectView(ctx.bot, raids, new_open_time)
           await ctx.respond(view=view, ephemeral=True)
     except InvalidArgument as e:
-      await ctx.respond(_t("raid.reset.update.error", error=str(e)), ephemeral=True)
+      await ctx.respond(_t("raid.open.update.error", error=str(e)), ephemeral=True)
 
 def setup(bot):
   bot.add_cog(SettingsCog(bot))

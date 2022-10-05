@@ -88,7 +88,7 @@ async def record_attendance(session, id_character: int, raid_datetime: datetime.
   try:
     raid = (await session.execute(select(Raid).where(Raid.id == id_raid))).scalars().one()
     
-    if raid_datetime < raid.reset_start:
+    if raid_datetime < raid.open_at:
       raise InvalidArgument(_t("attendance.invalid.raid_opens_later"))
 
     await add_or_update_attendance(
@@ -112,7 +112,7 @@ async def record_batch_attendance(sess, id_characters, raid_datetime: datetime.d
   try:
     raid = (await sess.execute(select(Raid).where(Raid.id == id_raid))).scalars().one()
     
-    if raid_datetime < raid.reset_start:
+    if raid_datetime < raid.open_at:
       raise InvalidArgument(_t("attendance.invalid.raid_opens_later"))
 
     not_added = dict()
