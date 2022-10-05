@@ -3,3 +3,4 @@
 __pychache__
 .vscode
 scripts/
+_test*.py
