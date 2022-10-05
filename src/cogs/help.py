@@ -13,7 +13,7 @@ def get_active_cogs(ctx: AutocompleteContext):
 
 
 class CogsEnum(enum.Enum):
-  PRESENCE = "Presence"
+  ATTENDANCE = "Attendance"
   CHARACTER = "Character"
   CHARTER = "Charter"
   HELLO = "Hello"

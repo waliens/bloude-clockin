@@ -7,7 +7,7 @@ from pycord18n.extension import _ as _t
 class CogToNameTwoWayIndex():
   def __init__(self):
     self._cog2name = {
-      "AttendanceCog": "Presence",
+      "AttendanceCog": "Attendance",
       "CharacterCog": "Character",
       "GuildInfoCog": "Charter",
       "HelloCog": "Hello",
