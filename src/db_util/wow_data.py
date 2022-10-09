@@ -349,43 +349,31 @@ class SpecEnum(HumanReadableEnum):
 
   @property
   def character_class(self):
-    if self == self.SHAMAN_ENHANCE:
-      return ClassEnum.SHAMAN  
-    elif self == self.SHAMAN_SPELLHANCE:
+    if self in {self.SHAMAN_ENHANCE, self.SHAMAN_SPELLHANCE}:
       return ClassEnum.SHAMAN
-    elif self == self.WARLOCK_AFFLI:
+    elif self in {self.WARLOCK_AFFLI, self.WARLOCK_DEMONO}:
       return ClassEnum.WARLOCK
-    elif self == self.WARLOCK_DEMONO:
-      return ClassEnum.WARLOCK
-    elif self == self.ROGUE_COMBAT:
+    elif self in {self.ROGUE_COMBAT, self.ROGUE_ASSA}:
       return ClassEnum.ROGUE
-    elif self == self.ROGUE_ASSA:
-      return ClassEnum.ROGUE
-    elif self == self.DK_UNHOLY:
+    elif self in {self.DK_UNHOLY, self.DK_FROST}:
       return ClassEnum.DEATH_KNIGHT
-    elif self == self.DK_FROST:
-      return ClassEnum.DEATH_KNIGHT
-    elif self == self.PRIEST_HOLY:
-      return ClassEnum.PRIEST
-    elif self == self.PRIEST_DISC:
+    elif self in {self.PRIEST_HOLY, self.PRIEST_DISC}:
       return ClassEnum.PRIEST
     else:
       raise ValueError("unknown spec")
 
   @property
   def role(self):
-    if self == self.SHAMAN_ENHANCE:
-      return RoleEnum.MELEE_DPS  
-    elif self == self.SHAMAN_SPELLHANCE:
+    if self in {self.SHAMAN_ENHANCE, self.SHAMAN_SPELLHANCE}:
       return RoleEnum.MELEE_DPS
-    elif self == self.WARLOCK_AFFLI:
+    elif self in {self.WARLOCK_AFFLI, self.WARLOCK_DEMONO}:
       return RoleEnum.RANGED_DPS
-    elif self == self.WARLOCK_DEMONO:
-      return RoleEnum.RANGED_DPS
-    elif self == self.ROGUE_COMBAT:
+    elif self in {self.ROGUE_COMBAT, self.ROGUE_ASSA}:
       return RoleEnum.MELEE_DPS
-    elif self == self.ROGUE_ASSA:
+    elif self in {self.DK_UNHOLY, self.DK_FROST}:
       return RoleEnum.MELEE_DPS
+    elif self in {self.PRIEST_HOLY, self.PRIEST_DISC}:
+      return RoleEnum.HEALER
     else:
       raise ValueError("unknown spec")
 
