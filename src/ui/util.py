@@ -11,6 +11,11 @@ EMBED_FIELD_VALUE_MAX_LENGTH = 1024
 EMBED_DESCRIPTION_MAX_LENGTH = 4096
 
 
+class NoSelectionException(InvalidArgument):
+  def __init__(self, *args: object) -> None:
+    super().__init__(_t("general.invalid.no_selection"), *args)
+
+
 class DeferSelect(Select):
   def __init__(self, data, *args, **kwargs):
     super().__init__(
@@ -206,19 +211,26 @@ class ListSelectorView(View):
 
 
 class MultiSelectView(View):
-  def __init__(self, bot, selects, *args, **kwargs):
+  def __init__(self, bot, selects, *args, check_for_values=True, **kwargs):
     super().__init__(*args, **kwargs)
     self._bot = bot
     self._selects = selects
     self._cancel_button = CancelButton()
+    self._check_for_values = check_for_values
 
     async def _confirm_callback(interaction: Interaction):
       try:
         self.disable_all_items()
-        await self.confirm_callback(*[select.values for select in self._selects])
+        selected_values = [select.values for select in self._selects]
+        if self._check_for_values and any(len(vs) for vs in selected_values):
+          raise NoSelectionException()
+        await self.confirm_callback(*selected_values)
         self.stop()
         self.clear_items()
         await interaction.response.edit_message(**self.success_message())
+      except NoSelectionException as e:
+        self.enable_all_items()
+        return await interaction.response.edit_message(content=str(e))
       except InvalidArgument as e:
         self.enable_all_items()
         return await interaction.response.edit_message(**self.error_message(e))
