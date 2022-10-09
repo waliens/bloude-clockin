@@ -92,9 +92,10 @@ class UserRecipeEmbed(Embed):
         prof_name=self._one_profession.name_hr, 
         char_name=character.name
       )
-      self.description = f"<@{character.id_user}>\n" + self._get_all_recipes_list(user_recipes)
+      self.description = f"<@{character.id_user}>\n"
+      self.description += self._get_all_recipes_list(user_recipes, size_limit=EMBED_DESCRIPTION_MAX_LENGTH - len(self.description))
 
-  def _get_all_recipes_list(self, user_recipes):
+  def _get_all_recipes_list(self, user_recipes, size_limit=EMBED_DESCRIPTION_MAX_LENGTH):
     if len(user_recipes) == 0:
       return _t("recipe.ui.user_recipe.embed.no_recipe")
     recipe_descriptors = list()
@@ -102,14 +103,14 @@ class UserRecipeEmbed(Embed):
       desc = self._get_user_recipe_descriptor(ur)
       # check if going over field content size limit
       curr_field_size = sum(map(len, recipe_descriptors)) + len(recipe_descriptors) 
-      if curr_field_size + len(desc) < EMBED_DESCRIPTION_MAX_LENGTH - len(self.ETC_DESC):
+      if curr_field_size + len(desc) < size_limit - len(self.ETC_DESC):
         recipe_descriptors.append(desc)
       else:
         recipe_descriptors.append(self.ETC_DESC)
         break
     return "\n".join(recipe_descriptors)
   
-  def _get_profession_field(self, profession: ProfessionEnum, user_recipes):
+  def _get_profession_field(self, profession: ProfessionEnum, user_recipes, size_limit=EMBED_FIELD_VALUE_MAX_LENGTH):
     filtered = [ur for ur in user_recipes if ur.recipe.profession == profession]
     name = f"{profession.name_hr} {get_profession_emoji(profession)}"
 
@@ -118,7 +119,7 @@ class UserRecipeEmbed(Embed):
       desc = self._get_user_recipe_descriptor(ur)
       # check if going over field content size limit
       curr_field_size = sum(map(len, recipe_descriptors)) + len(recipe_descriptors) 
-      if curr_field_size + len(desc) < EMBED_FIELD_VALUE_MAX_LENGTH - len(self.ETC_DESC):
+      if curr_field_size + len(desc) < size_limit - len(self.ETC_DESC):
         recipe_descriptors.append(desc)
       else:
         recipe_descriptors.append(self.ETC_DESC)
