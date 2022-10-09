@@ -99,7 +99,7 @@ class UserRecipeEmbed(Embed):
     if len(user_recipes) == 0:
       return _t("recipe.ui.user_recipe.embed.no_recipe")
     recipe_descriptors = list()
-    for ur in user_recipes:
+    for ur in sorted(user_recipes, key=lambda r: localized_attr(r.recipe, "name")):
       desc = self._get_user_recipe_descriptor(ur)
       # check if going over field content size limit
       curr_field_size = sum(map(len, recipe_descriptors)) + len(recipe_descriptors) 
@@ -115,7 +115,7 @@ class UserRecipeEmbed(Embed):
     name = f"{profession.name_hr} {get_profession_emoji(profession)}"
 
     recipe_descriptors = list()
-    for ur in filtered:
+    for ur in sorted(filtered, key=lambda r: localized_attr(r.recipe, "name")):
       desc = self._get_user_recipe_descriptor(ur)
       # check if going over field content size limit
       curr_field_size = sum(map(len, recipe_descriptors)) + len(recipe_descriptors) 
