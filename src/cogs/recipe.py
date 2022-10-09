@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands   
 from discord import InvalidArgument, Option, guild_only
 
-from cogs.util import get_applied_user_id
+from cogs.util import get_applied_user_id, parse_identifiers_str
 
 from pycord18n.extension import _ as _t
 
@@ -40,7 +40,8 @@ class RecipeCog(commands.Cog):
           await ctx.defer(ephemeral=True)
           character = await get_character(sess, guild_id, user_id, char_name)
           if recipe_ids is not None:
-            user_recipes = await register_user_recipes(sess, [int(v.strip()) for v in recipe_ids.split(",")], character.id)
+            recipe_ids = parse_identifiers_str(recipe_ids)
+            user_recipes = await register_user_recipes(sess, recipe_ids, character.id)
             recipes = await get_recipes(sess, [ur.id_recipe for ur in user_recipes])
             embed = RecipeListEmbed(recipes, title=_t("recipe.add.embed.title"), max_items=25, show_ids=True)
             await ctx.respond(embed=embed, ephemeral=True)
@@ -93,7 +94,8 @@ class RecipeCog(commands.Cog):
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
           if recipe_ids is not None:
-            crafters = await get_crafters(sess, [int(v.strip()) for v in recipe_ids.split(",")])
+            recipe_ids = parse_identifiers_str(recipe_ids)
+            crafters = await get_crafters(sess, recipe_ids)
             embed = RecipeCraftersEmbed(crafters, show_ids=show_ids)
             await ctx.respond(embed=embed, ephemeral=not public)
           else:
@@ -123,7 +125,8 @@ class RecipeCog(commands.Cog):
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
           character = await get_character(sess, guild_id, id_user=user_id, name=char_name)
-          await remove_user_recipes(sess, character.id, [int(v.strip()) for v in recipe_ids.split(",")])
+          recipe_ids = parse_identifiers_str(recipe_ids)
+          await remove_user_recipes(sess, character.id, recipe_ids)
           await ctx.respond(_t("recipe.remove.success"), ephemeral=True)
   
     except InvalidArgument as e:

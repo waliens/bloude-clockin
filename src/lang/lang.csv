@@ -65,6 +65,7 @@ general.invalid.adminrequired,"requires admin permissions","nécessite les permi
 general.invalid.onbehalf,"you do not have the permissions to execute this command on behalf of another user","tu n'as pas la permission d'exécuter cette commande au nom d'un autre utilisateur"
 general.invalid.datetime,"cannot parse date, should be in format `DD/MM/YYYY HH:mm`","impossible de parser la date car elle devrait suivre le format `DD/MM/YYYY HH:mm`"
 general.invalid.date,"cannot parse date, should be in format `DD/MM/YYYY`","impossible de parser la date car elle devrait suivre le format `DD/MM/YYYY`"
+general.invalid.id_list,"invalid list of identifiers","liste d'identifiants invalide"
 general.ui.list.empty,"No result.","Pas de résultat."
 general.ui.list.matching,"Matches:","Correspondances:"
 general.ui.list.toomany,"Too many elements, only displaying {count}.","Trop d'éléments, seuls {count} sont affichés."

@@ -52,3 +52,10 @@ def parse_loots_str(loots: str):
     char_list.split(":")[0].strip(): list(map(int, char_list.split(":")[1].split(","))) 
     for char_list in loots.split(";")
   }
+
+
+def parse_identifiers_str(l):
+  """check a comma separated list of integer identifiers"""
+  if re.match("^\s*[0-9]+(\s*,\s*[0-9]+)*\s*$", l) is None:
+    raise InvalidArgument("general.invalid.id_list")
+  return [int(v.strip()) for v in l.split(",")]
