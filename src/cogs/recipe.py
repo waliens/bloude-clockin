@@ -43,6 +43,7 @@ class RecipeCog(commands.Cog):
             recipe_ids = parse_identifiers_str(recipe_ids)
             user_recipes = await register_user_recipes(sess, recipe_ids, character.id)
             recipes = await get_recipes(sess, [ur.id_recipe for ur in user_recipes])
+            await sess.commit()
             embed = RecipeListEmbed(recipes, title=_t("recipe.add.embed.title"), max_items=25, show_ids=True)
             await ctx.respond(embed=embed, ephemeral=True)
           else:

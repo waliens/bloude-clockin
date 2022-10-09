@@ -73,7 +73,7 @@ def get_profession_emoji(profession: ProfessionEnum):
 
 
 class UserRecipeEmbed(Embed):
-  ETC_DESC = "- ..."
+  ETC_DESC = "..."
 
   def __init__(self, character, user_recipes, *args, one_profession: ProfessionEnum=None, show_ids=False, show_dates=False, **kwargs):
     super().__init__(*args, **kwargs)

@@ -105,15 +105,24 @@ async def register_bulk_loots(sess, guild_id, loots_maps: dict, in_dkp=False):
   await sess.commit()
 
 
-async def register_user_recipes(sess, recipe_ids, character_id):
+async def register_user_recipes(sess, recipe_ids, character_id, do_commit=False):
   """Register a recipe for the given character"""
   try:
+    # get already recorded recipes
+    query = select(UserRecipe).where(UserRecipe.id_character == character_id, UserRecipe.id_recipe.in_(recipe_ids))
+    result = await sess.execute(query)
+    existing_recipes = result.scalars().all()
+    existing_ids = set([r.id_recipe for r in existing_recipes])
+
+    # create newly added ones
     new_recipes = [
       UserRecipe(id_recipe=recipe_id, id_character=character_id)
       for recipe_id in recipe_ids
+      if recipe_id not in existing_ids
     ]
     sess.add_all(new_recipes)
-    await sess.commit()
+    if do_commit:
+      await sess.commit()
     return new_recipes
   except IntegrityError:
     raise InvalidArgument(_t("recipe.invalid.alreadyrecorded"))
