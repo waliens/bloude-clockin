@@ -57,5 +57,5 @@ def parse_loots_str(loots: str):
 def parse_identifiers_str(l):
   """check a comma separated list of integer identifiers"""
   if re.match("^\s*[0-9]+(\s*,\s*[0-9]+)*\s*$", l) is None:
-    raise InvalidArgument("general.invalid.id_list")
+    raise InvalidArgument(_t("general.invalid.id_list"))
   return [int(v.strip()) for v in l.split(",")]
