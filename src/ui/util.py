@@ -222,7 +222,7 @@ class MultiSelectView(View):
       try:
         self.disable_all_items()
         selected_values = [select.values for select in self._selects]
-        if self._check_for_values and any(len(vs) for vs in selected_values):
+        if self._check_for_values and any(len(vs) == 0 for vs in selected_values):
           raise NoSelectionException()
         await self.confirm_callback(*selected_values)
         self.stop()
