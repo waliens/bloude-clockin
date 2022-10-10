@@ -1,5 +1,6 @@
 from discord import Cog, Embed, SlashCommandGroup, ApplicationContext
 from discord.ext import commands
+from discord.ext.commands.errors import CheckFailure
 
 from pycord18n.extension import _ as _t
 
@@ -51,9 +52,14 @@ class HelpEmbed(Embed):
       for cmd in cog.walk_commands():
         if isinstance(cmd, SlashCommandGroup):
           continue
-        if not all([check(ctx) for check in cmd.checks]):  # hide unavailable commands
+        
+        # skip unauthorized commands or commands that cannot be run by the user issuing the command
+        try:
+          for check in cmd.checks:
+            check(ctx)
+        except CheckFailure:
           continue
-      
+
         if cmd.is_subcommand:
           name = f"`/{cmd.full_parent_name.strip()} {cmd.name}`"
           key = f"help.{cmd.full_parent_name.strip()} {cmd.name}".replace(" ", ".")
