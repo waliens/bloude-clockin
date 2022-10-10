@@ -45,6 +45,10 @@ class Character(Base):
     UniqueConstraint('id_user', 'name', 'id_guild', name='id_guild_user_name_unique_constraint'),
   )
 
+  @property
+  def role_tuple(self):
+    return (self.character_class, self.role, self.spec)
+
 
 class Raid(Base):
   __tablename__ = "raid"

@@ -196,19 +196,21 @@ def format_role_list(roles, role_names_map: dict):
   return [role_names_map.get(role, "???") for role in roles]
 
 
-async def generate_prio_str_for_item(sess, id_guild, item_priority: ItemWithPriority, role_names_map: dict= None, character_map: dict = None):
+async def generate_prio_str_for_item(sess, id_guild, item_priority: ItemWithPriority, item_level: int, role_names_map: dict= None, character_map: dict = None, loots_per_char: dict = None):
   """
   Parameters
   ----------
   sess: AsyncSession
   item_priority: ItemWithPriority
     An item with its priority
+  item_level: int 
+    The item level of the item
   role_names_map: ???
     Map a role tuple with its actual name
   characters_map: dict
     Maps role tuple with a list of characters
-  locale: str
-    Language for generation
+  loots_per_char: dict
+    Maps character id with its loots for the slot if the item
 
   Returns
   -------
@@ -233,12 +235,6 @@ async def generate_prio_str_for_item(sess, id_guild, item_priority: ItemWithPrio
   curr_item_loots = already_looted_results.scalars().all()
   characters_have_looted = {loot.id_character for loot in curr_item_loots}
 
-  # TODO consider already looted in the same slot
-  # inv_type = item.metadata_["inventoryType"]
-  # query = select(Loot).where(Loot.item.has(Item.metadata_['InventoryType'].astext.cast(Integer) == inv_type))
-  # results = await sess.execute(query)
-  # loots = results.scalars().all()
-
   prio_str_dict = dict()
   for tier in PrioTierEnum:
     tier_sublevels = priority.get_for_tier(tier)
@@ -249,11 +245,20 @@ async def generate_prio_str_for_item(sess, id_guild, item_priority: ItemWithPrio
     for sublevel in tier_sublevels:
       sublevel_characters = list()
       for role in sublevel:
-        # character should not be listed if one of these condition is filled
-        # - he has looted the item
-        # - TODO he has looted an upgrade
-        # TODO also display ilvl of current item at that slot
-        found_characters = [f"{c.name} ({c_dkp})" for c, c_dkp in character_map[role] if c.id not in characters_have_looted]
+        found_characters = list()
+        for char, char_dkp in character_map[role]: 
+          # has looted the same item ?
+          if char.id in characters_have_looted:
+            continue
+          # has looted an upgrade ?
+          char_ilvl = "-"
+          if loots_per_char is not None and len(loots_per_char[char.id]) > 0:
+            char_loots = loots_per_char[char.id]
+            best_loot, best_loot_tier = char_loots[0]
+            if tier.value >= best_loot_tier.value and item_level <= best_loot.item.metadata_["ItemLevel"]:
+              continue 
+            char_ilvl = str(best_loot.item.metadata_["ItemLevel"])
+          found_characters.append(f"{char.name} ({char_dkp}, {char_ilvl})")
         sublevel_characters.extend(found_characters)
       if len(sublevel_characters) == 0:
         continue

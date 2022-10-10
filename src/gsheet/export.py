@@ -3,7 +3,7 @@ import pygsheets
 from collections import defaultdict
 from pygsheets import Spreadsheet, Worksheet, Cell, DataRange
 from discord import InvalidArgument, Client
-from sqlalchemy import select
+from sqlalchemy import select, Integer
 from db_util.dkp import compute_dkp_score
 from db_util.priorities import PrioTierEnum, generate_prio_str_for_item
 from db_util.wow_data import ItemInventoryTypeEnum
@@ -12,6 +12,7 @@ from gsheet_helpers import get_creds
 from models import Character, GuildSettings, Item, Loot
 from pycord18n.extension import _ as _t
 from lang.util import localized_attr
+from db_util.wow_data import InventorySlotEnum, ItemInventoryTypeEnum
 
 
 def create_worksheet(sheet: Spreadsheet, name: str, table) -> Worksheet:
@@ -88,6 +89,43 @@ async def create_loot_table(sess, guild_id):
   return table
 
 
+async def loots_for_slots(sess, slot: InventorySlotEnum, char_map: dict, priorities: dict):
+  """Returs a dictionnary mapping character ids with list of tuples (=> [loot, tier level] )for this slot sorted by increasing priority tier and deacreasing ilvl
+
+  """
+  # extract loots for all listed characters and given slot
+  if slot is None:
+    inv_types = [ItemInventoryTypeEnum.NON_EQUIPABLE]
+  else:
+    inv_types = slot.get_inventory_types()
+  query = select(Loot).where(
+    Loot.item.has(Item.metadata_['InventoryType'].astext.cast(Integer).in_([it.value for it in inv_types])),
+    Loot.id_character.in_([char.id for char_list in char_map.values() for char, _ in char_list]),
+    Loot.id_item.in_(list(priorities.keys()))
+  )
+  results = await sess.execute(query)
+  loots = results.scalars().all()
+
+  # group per character and filter out items that are not useful
+  loot_per_character = defaultdict(list)
+  for loot in loots:
+    priority_list = priorities[loot.id_item].priority_list
+    tier = priority_list.get_priority_tier(loot.character.role_tuple)
+    if tier != PrioTierEnum.IS_USELESS:
+      loot_per_character[loot.id_character].append((loot, tier))
+
+  # sort by tier and ilvl
+  for id_character in loot_per_character.keys():
+    loots = loot_per_character[id_character]
+    # sort by increasing priority tier (first) and item level deacreasing (second)
+    sort_key_fn = lambda loot_tuple: (
+      loot_tuple[1].value,
+      -int(loot_tuple[0].item.metadata_['ItemLevel'])
+    )
+    loot_per_character[id_character] = sorted(loots, key=sort_key_fn)
+  
+  return loot_per_character
+
 async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priorities: dict, role2name: dict, per_class=False):
   """
   Parameters
@@ -153,6 +191,9 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
     current_row = len(per_class_sheet_table) + 1
     slot_header_cell_merges.append(current_row)
 
+    loots_per_character = await loots_for_slots(sess, slot, char_dict, priorities)
+
+    # read current item lists
     if slot is not None:
       per_class_sheet_table.append([slot.name_hr])
       per_char_sheet_table.append([slot.name_hr])
@@ -164,9 +205,9 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
       item = item_index[item_id]
       row_header = [item.id, localized_attr(item, 'name'), item.metadata_["ItemLevel"]]
       # per_class
-      per_class_prio_dict = await generate_prio_str_for_item(sess, id_guild, priorities[item_id], role2name)
+      per_class_prio_dict = await generate_prio_str_for_item(sess, id_guild, priorities[item_id], item.metadata_["ItemLevel"], role2name, loots_per_char=loots_per_character)
       per_class_sheet_table.append(row_header + [per_class_prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()])
-      per_char_prio_dict = await generate_prio_str_for_item(sess, id_guild, priorities[item_id], role2name, char_dict)
+      per_char_prio_dict = await generate_prio_str_for_item(sess, id_guild, priorities[item_id], item.metadata_["ItemLevel"], role2name, char_dict, loots_per_char=loots_per_character)
       per_char_sheet_table.append(row_header + [per_char_prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()])
 
   # actually generate the sheet
