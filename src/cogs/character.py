@@ -6,7 +6,7 @@ from discord import InvalidArgument, Option, guild_only
 from discord.ext import commands
 from sqlalchemy import select
 
-from ui.character import SpecSelectionView
+from ui.character import CharacterListEmbed, SpecSelectionView
 
 from .util import default_if_none, get_applied_user_id
 from db_util.character import add_character, get_character, update_character, delete_character
@@ -117,9 +117,10 @@ class CharacterCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(_t("character.delete.error", error=str(e)), ephemeral=True)
 
-  @discord.slash_command(description="List of characters")
+
+  @character_group.command(description="List of a user's characters")
   @guild_only()
-  async def characters(self, ctx, 
+  async def list(self, ctx, 
     for_user: Option(discord.Member, description="Display the list for the selected user (admin only).") = None, 
     public: Option(bool, description="To display the characters list publicly.") = False
   ):
@@ -131,39 +132,45 @@ class CharacterCog(commands.Cog):
     
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
-          characters = (await sess.execute(select(Character).where(
+          query = select(Character).where(
             Character.id_user == user_id,
             Character.id_guild == guild_id
-          ).order_by(Character.is_main.desc()))).scalars().all()
-
-          if len(characters) > 0:
-            formatted = list()
-            for c in characters:
-              descriptor = ":" + {RoleEnum.HEALER: "ambulance", RoleEnum.MELEE_DPS: "crossed_swords", RoleEnum.RANGED_DPS: "bow_and_arrow", RoleEnum.TANK: "shield"}[c.role] + ":"
-              descriptor += " "
-              if c.is_main:
-                descriptor += "**"
-              descriptor +=  c.name
-              if c.is_main:
-                descriptor += "**"
-              descriptor +=  f" ({c.character_class.name_hr}"
-              if c.spec is not None:
-                descriptor += f" {c.spec.name_hr.lower()}"
-              descriptor += ")"
-              formatted.append(descriptor)
-            description = os.linesep.join(formatted)
-          else:
-            description = _t("character.list.noneregistered")
-
-          embed = discord.Embed(
-            title=_t("character.list.title"),
-            description=description
-          )
-
+          ).order_by(Character.is_main.desc(), Character.name.asc())
+          characters = (await sess.execute(query)).scalars().all()
+          embed = CharacterListEmbed(characters)
           await ctx.respond(embed=embed, ephemeral=not public)
 
     except InvalidArgument as e:
       await ctx.respond(_t("character.list.error", str(e)), ephemeral=True)
+
+  @character_group.command(description="")
+  @commands.has_permissions(administrator=True)
+  @guild_only()
+  async def all(self, ctx,
+    main_only: Option(bool, description="Main characters only.") = True,
+    character_class: Option(ClassEnum, name="class", description="Only list characters with this class") = None,
+    role: Option(RoleEnum, description="Only list characters with this role") = None,
+    spec: Option(SpecEnum, description="Only list characters with this spec") = None,
+    public: Option(bool, description="Whether or not to display the resulting list publicly.") = False
+  ):
+    guild_id = str(ctx.guild_id)
+  
+    async with self.bot.db_session_class() as sess:
+      async with sess.begin():
+        where_clause = [Character.id_guild == guild_id]
+        if main_only:
+          where_clause.append(Character.is_main == True)
+        if character_class is not None:
+          where_clause.append(Character.character_class == character_class)
+        if role is not None:
+          where_clause.append(Character.role == role)
+        if spec is not None:
+          where_clause.append(Character.spec == spec)
+        
+        query = select(Character).where(*where_clause).order_by(Character.id_user.asc(), Character.name.asc())
+        characters = (await sess.execute(query)).scalars().all()
+        embed = CharacterListEmbed(characters, display_user=True)
+        await ctx.respond(embed=embed, ephemeral=not public)
 
   @commands.Cog.listener()
   async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):

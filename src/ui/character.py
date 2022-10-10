@@ -1,9 +1,13 @@
 
+import os
 from discord.ui import Button
 
+from ui.util import EMBED_DESCRIPTION_MAX_LENGTH
 from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
-from discord import ButtonStyle, Interaction, InvalidArgument
+from discord import ButtonStyle, Interaction, InvalidArgument, Embed
 from discord.ui import View
+
+from pycord18n.extension import _ as _t
 
 
 class SpecButton(Button):
@@ -43,4 +47,35 @@ class SpecSelectionView(View):
       self.add_item(SpecButton(click_callback, spec, style=ButtonStyle.primary, row=i))
     
 
+class CharacterListEmbed(Embed):
+  ETC_STR = "..."
 
+  def __init__(self, characters, *args, display_user=False, **kwargs):
+    super().__init__(*args, **kwargs)
+    if len(characters) > 0:
+      formatted = list()
+      for c in characters:
+        descriptor = ":" + {RoleEnum.HEALER: "ambulance", RoleEnum.MELEE_DPS: "crossed_swords", RoleEnum.RANGED_DPS: "bow_and_arrow", RoleEnum.TANK: "shield"}[c.role] + ":"
+        descriptor += " "
+        if c.is_main:
+          descriptor += "**"
+        descriptor +=  c.name
+        if c.is_main:
+          descriptor += "**"
+        descriptor +=  f" ({c.character_class.name_hr}"
+        if c.spec is not None:
+          descriptor += f" {c.spec.name_hr.lower()}"
+        descriptor += ")"
+        if display_user:
+          descriptor += f" <@{c.id_user}>"
+        if sum(map(len, formatted)) + len("\n") * len(formatted) + len(descriptor) < EMBED_DESCRIPTION_MAX_LENGTH - len("\n" + self.ETC_STR):
+          formatted.append(descriptor)
+        else:
+          formatted.append(self.ETC_STR)
+          break
+      description = os.linesep.join(formatted)
+    else:
+      description = _t("character.list.noneregistered")
+
+    self.description = description
+    self.title = _t("character.list.title")
