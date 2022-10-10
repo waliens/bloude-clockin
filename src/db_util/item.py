@@ -66,6 +66,8 @@ async def register_loot(sess, item_id, character_id, in_dkp=False, commit=True):
   """Register a loot for the given character"""
   try:
     item = await sess.get(Item, item_id)
+    if item is None:
+      raise InvalidArgument(_t("item.invalid.notfoundwithid", id_item=item_id))
     maxcount = int(item.metadata_["maxcount"])
 
     cnt_query = select(func.count(Loot.id)).where(Loot.id_item == item_id, Loot.id_character == character_id)
@@ -99,7 +101,10 @@ async def register_bulk_loots(sess, guild_id, loots_maps: dict, in_dkp=False):
     for item_id in item_ids:
       try:
         await register_loot(sess, item_id, character.id, in_dkp=in_dkp, commit=False)
-      except InvalidArgument:
+      except InvalidArgument as e:
+        # TODO make underlying error detection cleaner
+        if str(e) == _t("item.invalid.notfoundwithid", id_item=item_id):
+          raise e
         raise InvalidArgument(_t("item.invalid.alreadyrecorded_withinfo", item_id=item_id, character_name=character_name))
 
   await sess.commit()

@@ -183,6 +183,7 @@ item.invalid.alreadyrecorded,"this loot was already recorded","ce loot a déjà 
 item.invalid.alreadyrecorded_withinfo,"the loot '{item_id}' has already been recorded for character '{character_name}'","le loot '{item_id}' as déjà été enregistré pour le personnage '{character_name}'"
 item.invalid.missing.nameorid,"missing item name or id","nom ou identifiant d'objet manquant"
 item.invalid.nomatch,"no matching item found","impossible de trouver un objet correspondant"
+item.invalid.notfoundwithid,"item not found {id_item}","impossible de trouver l'item {id_item}"
 item.ui.warning.toomany,"Too many items, only displaying {count}.","Trop d'objets, seuls {count} sont affichés."
 loot.add.error,"Cannot register loot: {error}.","Impossible d'enregistrer un loot: {error}." 
 loot.bulk.error,"Cannot add loots: {error}.","Impossible d'ajouter les loots: {error}."
