@@ -6,7 +6,7 @@ from discord import InvalidArgument, Option, SlashCommandGroup
 from discord.ext import commands
 import discord
 
-from cogs.util import get_applied_user_id, parse_loots_str
+from cogs.util import get_applied_user_id, parse_loots_str, validate_character_name
 from db_util.character import get_character
 from db_util.item import fetch_loots, items_search, register_bulk_loots, remove_loots
 from db_util.wow_data import InventorySlotEnum
@@ -34,7 +34,8 @@ class LootCog(commands.Cog):
         raise InvalidArgument(_t("loot.invalid.missinginfo"))
       if item_name is not None and item_id is not None:
         raise InvalidArgument(_t("loot.invalid.toomuchinfo"))
-        
+      
+      char_name = validate_character_name(char_name)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       guild_id = str(ctx.guild_id)
 
@@ -60,6 +61,7 @@ class LootCog(commands.Cog):
   ):
     try:
       await ctx.defer(ephemeral=True)
+      char_name = validate_character_name(char_name)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       guild_id = str(ctx.guild_id)
 
@@ -95,6 +97,7 @@ class LootCog(commands.Cog):
     show_ids: Option(bool) = False
   ):
     try:
+      char_name = validate_character_name(char_name)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       guild_id = str(ctx.guild_id)
 

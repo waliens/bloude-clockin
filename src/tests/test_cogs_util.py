@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from cogs.util import parse_loots_str
+from cogs.util import parse_loots_str, validate_character_name
 from lang.util import build_i18n
 from discord import InvalidArgument 
 
@@ -28,3 +28,10 @@ class CogsUtilTests(TestCase):
     with self.assertRaises(InvalidArgument):
       _ = parse_loots_str(l)
   
+  def testValidateCharacterName(self):
+    self.assertEqual(validate_character_name("name"), "Name")
+    self.assertEqual(validate_character_name("Name"), "Name")
+    self.assertEqual(validate_character_name("NaMe"), "Name")
+    
+    with self.assertRaises(InvalidArgument):
+      validate_character_name("name aa")

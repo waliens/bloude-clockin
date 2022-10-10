@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands   
 from discord import InvalidArgument, Option, guild_only
 
-from cogs.util import get_applied_user_id, parse_identifiers_str
+from cogs.util import get_applied_user_id, parse_identifiers_str, validate_character_name
 
 from pycord18n.extension import _ as _t
 
@@ -32,6 +32,7 @@ class RecipeCog(commands.Cog):
       if (recipe_name is None or profession is None) and recipe_ids is None:
         raise InvalidArgument(_t("recipe.invalid.missinginfo"))
       
+      char_name = validate_character_name(char_name)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       guild_id = str(ctx.guild_id)
 
@@ -66,6 +67,7 @@ class RecipeCog(commands.Cog):
     public: Option(bool, description="True to display the list publicly, defaults to False.") = False
   ):
     try:
+      char_name = validate_character_name(char_name)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id), requires_admin=False)
       guild_id = str(ctx.guild_id)
       async with self.bot.db_session_class() as sess:
@@ -117,6 +119,7 @@ class RecipeCog(commands.Cog):
   ):
     try:
       await ctx.defer(ephemeral=True)
+      char_name = validate_character_name(char_name)
       if recipe_ids is None:
         raise InvalidArgument(_t("recipe.invalid.missing.ids"))
       

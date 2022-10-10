@@ -30,6 +30,7 @@ character.invalid.spec,"invalid spec for class/role combination","spécialisatio
 character.invalid.unknown,"unknown character '{name}'","le personnage '{name}' est inconnu"
 character.invalid.unknownornomain,"unknown character, or no main character for this user","personnage inconnu, ou cet utilisateur n'a pas renseigné de personnage principal"
 character.invalid.multiplecharactersfound,"multiple characters found","plusieurs personnages trouvés"
+character.invalid.character_name,"invalid character name","nom de personnage invalide"
 character.list.error,"Cannot list characters: {error}.","Impossible d'afficher les personnages: {error}."
 character.list.noneregistered,"No character registered.","Aucun personnage."
 character.list.title,"List of characters","Liste des personnages"

@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from ui.character import CharacterListEmbed, SpecSelectionView
 
-from .util import default_if_none, get_applied_user_id
+from .util import default_if_none, get_applied_user_id, validate_character_name
 from db_util.character import add_character, get_character, update_character, delete_character
 from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
 from models import Character
@@ -34,6 +34,7 @@ class CharacterCog(commands.Cog):
     """Add a new character
     """
     try:
+      name = validate_character_name(name)
       guild_id = str(ctx.guild_id)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       
@@ -73,6 +74,9 @@ class CharacterCog(commands.Cog):
       if is_main is None and new_name is None and role is None and character_class is None:
         raise InvalidArgument(_t("character.update.nothingtochange"))
 
+      name = validate_character_name(name)
+      if new_name is not None:
+        new_name = validate_character_name(new_name)
       guild_id = str(ctx.guild_id)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       
@@ -106,6 +110,7 @@ class CharacterCog(commands.Cog):
     """Delete a character
     """
     try:
+      name = validate_character_name(name)
       guild_id = str(ctx.guild_id)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       

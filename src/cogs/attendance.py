@@ -10,8 +10,7 @@ from db_util.raid import get_raids
 from db_util.raid_helper import extract_raid_helpers_data
 from ui.attendance import BatchAttendanceRaidSelectView, CharacterAttendanceEmbed, AttendanceRaidSelectView
 
-from .util import get_applied_user_id, parse_date, parse_datetime
-
+from .util import get_applied_user_id, parse_date, parse_datetime, validate_character_name
 from pycord18n.extension import _ as _t
 
 
@@ -29,6 +28,7 @@ class AttendanceCog(commands.Cog):
     for_user: discord.Member = None,
   ):
     try:
+      char_name = validate_character_name(char_name)
       guild_id = str(ctx.guild_id)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       raid_datetime = parse_datetime(raid_datetime, default=datetime.datetime.now(tz=pytz.UTC)).replace(tzinfo=None)
@@ -88,6 +88,7 @@ class AttendanceCog(commands.Cog):
     for_user: discord.Member = None
   ):
     try:
+      char_name = validate_character_name(char_name)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       guild_id = str(ctx.guild_id)
 

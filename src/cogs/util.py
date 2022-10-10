@@ -39,6 +39,12 @@ def parse_datetime(datetime_str, default=None):
     raise InvalidArgument(_t("general.invalid.datetime"))
 
 
+def validate_character_name(s):
+  if re.search(r"\s+", s) is not None:
+    raise InvalidArgument(_t("character.invalid.character_name"))
+  return s.lower().capitalize()
+
+
 def parse_loots_str(loots: str):
   if len(loots.strip()) == 0:
     return {}
@@ -49,7 +55,7 @@ def parse_loots_str(loots: str):
     raise InvalidArgument(_t("loot.invalid.bulk_str"))
   
   return {
-    char_list.split(":")[0].strip(): list(map(int, char_list.split(":")[1].split(","))) 
+    validate_character_name(char_list.split(":")[0].strip()): list(map(int, char_list.split(":")[1].split(","))) 
     for char_list in loots.split(";")
   }
 
