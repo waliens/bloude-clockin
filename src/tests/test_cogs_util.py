@@ -32,6 +32,7 @@ class CogsUtilTests(TestCase):
     self.assertEqual(validate_character_name("name"), "Name")
     self.assertEqual(validate_character_name("Name"), "Name")
     self.assertEqual(validate_character_name("NaMe"), "Name")
+    self.assertIsNone(validate_character_name(None))
     
     with self.assertRaises(InvalidArgument):
       validate_character_name("name aa")

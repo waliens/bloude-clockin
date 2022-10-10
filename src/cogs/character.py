@@ -75,8 +75,7 @@ class CharacterCog(commands.Cog):
         raise InvalidArgument(_t("character.update.nothingtochange"))
 
       name = validate_character_name(name)
-      if new_name is not None:
-        new_name = validate_character_name(new_name)
+      new_name = validate_character_name(new_name)
       guild_id = str(ctx.guild_id)
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       

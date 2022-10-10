@@ -40,6 +40,8 @@ def parse_datetime(datetime_str, default=None):
 
 
 def validate_character_name(s):
+  if s is None:
+    return None
   if re.search(r"\s+", s) is not None:
     raise InvalidArgument(_t("character.invalid.character_name"))
   return s.lower().capitalize()
