@@ -128,7 +128,7 @@ class SettingsCog(commands.Cog):
       async with ctx.bot.db_session_class() as sess:
         async with sess.begin():
           await ctx.defer(ephemeral=True)
-          _, _, _, _, parser = await export_in_worksheets(sess, str(ctx.guild.id))
+          _, _, _, _, parser = await export_in_worksheets(sess, self._bot, str(ctx.guild.id))
           if len(parser.errors) == 0:
             await ctx.respond(_t("settings.gsheet.export.success"), ephemeral=True)
           else:

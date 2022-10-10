@@ -2,7 +2,7 @@ import pygsheets
 
 from collections import defaultdict
 from pygsheets import Spreadsheet, Worksheet, Cell, DataRange
-from discord import InvalidArgument
+from discord import InvalidArgument, Client
 from sqlalchemy import select
 from db_util.dkp import compute_dkp_score
 from db_util.priorities import PrioTierEnum, generate_prio_str_for_item
@@ -88,7 +88,7 @@ async def create_loot_table(sess, guild_id):
   return table
 
 
-async def generate_prio_sheets(sess, gc, sheet, id_guild, priorities: dict, role2name: dict, per_class=False):
+async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priorities: dict, role2name: dict, per_class=False):
   """
   Parameters
   ----------
@@ -101,7 +101,19 @@ async def generate_prio_sheets(sess, gc, sheet, id_guild, priorities: dict, role
     Maps role tuples with its str name
   """
   # read main characters list
-  query = select(Character).where(Character.is_main == True, Character.id_guild == id_guild)
+  where_clause = [Character.is_main == True, Character.id_guild == id_guild]
+
+  # role filtering
+  settings = await sess.get(GuildSettings, id_guild)
+  id_prio_role = settings.id_prio_role
+  if id_prio_role is not None:
+    guild = await client.fetch_guild(id_guild)
+    role = guild.get_role(int(settings.id_prio_role))
+    user_ids = [member.id for member in role.members]
+    if len(user_ids) > 0:  # only if there are actually users with this tag
+      where_clause.append(Character.id_user.in_(user_ids))
+
+  query = select(Character).where(*where_clause)
   results = await sess.execute(query)
 
   characters = results.scalars().all()
@@ -182,7 +194,7 @@ async def generate_prio_sheets(sess, gc, sheet, id_guild, priorities: dict, role
   return wksheets
 
 
-async def export_in_worksheets(sess, guild_id):
+async def export_in_worksheets(sess, client: Client, guild_id):
   settings = await sess.get(GuildSettings, guild_id)
 
   if settings is None or settings.id_export_gsheet is None:
@@ -198,6 +210,6 @@ async def export_in_worksheets(sess, guild_id):
 
   # parse prio
   prio_parser = PrioParser(full_sheet)
-  char_prio_sheet, class_prio_sheet = await generate_prio_sheets(sess, gc, full_sheet, guild_id, prio_parser._item_prio, prio_parser._role2name)
+  char_prio_sheet, class_prio_sheet = await generate_prio_sheets(sess, client, gc, full_sheet, guild_id, prio_parser._item_prio, prio_parser._role2name)
 
   return chr_worksheet, lts_worksheet, char_prio_sheet, class_prio_sheet, prio_parser
