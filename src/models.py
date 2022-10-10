@@ -25,6 +25,7 @@ class GuildSettings(Base):
   timezone = Column(String(256), default=DEFAULT_LOCALE)  # timezone identifier
   cheer_message = Column(String(256), nullable=True, default=None)
   id_export_gsheet = Column(String(256), nullable=True, default=None)
+  id_prio_role = Column(String(22), nullable=True, default=None)
 
 
 class Character(Base):

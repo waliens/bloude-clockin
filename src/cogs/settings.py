@@ -1,5 +1,5 @@
 import datetime
-from discord import guild_only, SlashCommandGroup, Option, InvalidArgument
+from discord import guild_only, SlashCommandGroup, Option, InvalidArgument, Role
 from discord.ext import commands
 from pycord18n.extension import _ as _t, I18nExtension
 from cogs.util import parse_datetime
@@ -25,7 +25,8 @@ class SettingsCog(commands.Cog):
       locale=GuildSettings.DEFAULT_LOCALE, 
       timezone=GuildSettings.DEFAULT_TZ, 
       cheer_message=None,
-      id_export_gsheet=None
+      id_export_gsheet=None,
+      id_prio_role=None
     )
 
   @settings_group.command(description="Set/update locale")
@@ -150,6 +151,30 @@ class SettingsCog(commands.Cog):
           await ctx.respond(view=view, ephemeral=True)
     except InvalidArgument as e:
       await ctx.respond(_t("raid.open.update.error", error=str(e)), ephemeral=True)
+
+  @settings_group.command(description="Set role used for user selection in item prioritization.")
+  @commands.has_permissions(administrator=True)
+  @guild_only()
+  async def prio_role(self, ctx,
+    role: Option(Role, description="The Discord role to consider. Don't specify a value for disabling prio role.") = None
+  ):
+    try:
+      guild_id = str(ctx.guild.id)
+
+      async with ctx.bot.db_session_class() as sess:
+        async with sess.begin():
+          settings = await sess.get(GuildSettings, guild_id)
+          if settings is None:
+            settings = SettingsCog._default_settings(guild_id)
+            sess.add(settings)
+          settings.id_prio_role = None if role is None else str(role.id)
+          await sess.commit()
+
+          # update locale
+          await ctx.respond(_t("settings.prio.role.success"), ephemeral=True)
+          
+    except InvalidArgument as e:
+      await ctx.respond(_t("settings.prio.role.error", error=str(e)))
 
 def setup(bot):
   bot.add_cog(SettingsCog(bot))
