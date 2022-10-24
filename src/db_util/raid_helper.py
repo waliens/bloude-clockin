@@ -70,7 +70,7 @@ async def extract_raid_helpers_data(sess, rh_event_id: int, guild_id):
   registered = list()
   missing = list()
   for signup in rh_event_data["signups"]:
-    if signup["role"] == "Absence":
+    if signup["role"] == "Absence" or signup["class"] == "Bench":
       continue
 
     characters = await get_user_characters(sess, id_guild=guild_id, id_user=int(signup["userid"]))
