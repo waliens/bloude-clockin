@@ -1,14 +1,8 @@
 FROM python:3.10.5-alpine3.16
 
-RUN pip install -U py-cord
-RUN pip install python-dotenv
-RUN pip install sqlalchemy[asyncio] sqlalchemy-utils
-RUN pip install alembic asyncpg psycopg2-binary
-RUN pip install python-dateutil pytz
-RUN pip install https://github.com/waliens/pycord18n/archive/refs/heads/main.zip
-RUN pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
-RUN pip install pygsheets 
-RUN pip install requests
+COPY infra/requirements.txt /tmp/requirements.txt
+
+RUN pip install -r /tmp/requirements.txt
 
 WORKDIR /bot
 
