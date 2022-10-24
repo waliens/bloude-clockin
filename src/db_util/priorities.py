@@ -2,8 +2,9 @@ from collections import defaultdict
 from enum import Enum
 from pygsheets import Cell
 from sqlalchemy import select
+from db_util.wow_data import ItemInventoryTypeEnum
 
-from models import Character, Loot
+from models import Character, Item, Loot
 
 
 class ParseError(Exception):
@@ -196,11 +197,15 @@ def format_role_list(roles, role_names_map: dict):
   return [role_names_map.get(role, "???") for role in roles]
 
 
-async def generate_prio_str_for_item(sess, id_guild, item_priority: ItemWithPriority, item_level: int, role_names_map: dict= None, character_map: dict = None, loots_per_char: dict = None):
+async def generate_prio_str_for_item(sess, id_guild, item: Item, item_priority: ItemWithPriority, item_level: int, role_names_map: dict= None, character_map: dict = None, loots_per_char: dict = None):
   """
   Parameters
   ----------
   sess: AsyncSession
+  id_guild: int
+    Guild identifier
+  item: Item
+    The item
   item_priority: ItemWithPriority
     An item with its priority
   item_level: int 
@@ -217,7 +222,8 @@ async def generate_prio_str_for_item(sess, id_guild, item_priority: ItemWithPrio
   prio_dict: dict
     Maps prio tier enum to it prioritized list of players/roles
   """
-  item_id = item_priority._item_id
+  item_id = item.id
+  item_slot = ItemInventoryTypeEnum(item.metadata_["InventoryType"]).get_slot()
   priority = item_priority._priority_list
   if not priority.has_roles():
     return empty_prio_str_dict()
@@ -250,9 +256,9 @@ async def generate_prio_str_for_item(sess, id_guild, item_priority: ItemWithPrio
           # has looted the same item ?
           if char.id in characters_have_looted:
             continue
-          # has looted an upgrade ?
+          # has looted an upgrade ? (only if equippable and not a bis)
           char_ilvl = "-"
-          if loots_per_char is not None and len(loots_per_char[char.id]) > 0:
+          if item_slot is not None and tier is not PrioTierEnum.IS_BIS and loots_per_char is not None and len(loots_per_char[char.id]) > 0:
             char_loots = loots_per_char[char.id]
             best_loot, best_loot_tier = char_loots[0]
             if tier.value >= best_loot_tier.value and item_level <= best_loot.item.metadata_["ItemLevel"]:

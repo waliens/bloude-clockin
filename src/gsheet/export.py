@@ -205,9 +205,9 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
       item = item_index[item_id]
       row_header = [item.id, localized_attr(item, 'name'), item.metadata_["ItemLevel"]]
       # per_class
-      per_class_prio_dict = await generate_prio_str_for_item(sess, id_guild, priorities[item_id], item.metadata_["ItemLevel"], role2name, loots_per_char=loots_per_character)
+      per_class_prio_dict = await generate_prio_str_for_item(sess, id_guild, item, priorities[item_id], item.metadata_["ItemLevel"], role2name, loots_per_char=loots_per_character)
       per_class_sheet_table.append(row_header + [per_class_prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()])
-      per_char_prio_dict = await generate_prio_str_for_item(sess, id_guild, priorities[item_id], item.metadata_["ItemLevel"], role2name, char_dict, loots_per_char=loots_per_character)
+      per_char_prio_dict = await generate_prio_str_for_item(sess, id_guild, item, priorities[item_id], item.metadata_["ItemLevel"], role2name, char_dict, loots_per_char=loots_per_character)
       per_char_sheet_table.append(row_header + [per_char_prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()])
 
   # actually generate the sheet
