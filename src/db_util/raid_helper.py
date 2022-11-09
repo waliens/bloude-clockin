@@ -38,6 +38,7 @@ def get_role(spec_name):
     "Destruction": (ClassEnum.WARLOCK, RoleEnum.RANGED_DPS, None),
     "Beastmastery": (ClassEnum.HUNTER, RoleEnum.RANGED_DPS, None),
     "Marksman": (ClassEnum.HUNTER, RoleEnum.RANGED_DPS, None),
+    "Marksmanship": (ClassEnum.HUNTER, RoleEnum.RANGED_DPS, None),
     "Survival": (ClassEnum.HUNTER, RoleEnum.RANGED_DPS, None),
     "Holy1": (ClassEnum.PALADIN, RoleEnum.HEALER, None),
     "Retribution": (ClassEnum.PALADIN, RoleEnum.MELEE_DPS, None),
