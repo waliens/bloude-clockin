@@ -53,7 +53,9 @@ async def add_character(session, id_user: str, id_guild: str, name: str, role: R
     raise InvalidArgument(_t("character.invalid.spec"))
   if len(user_characters) > 0 and has_character_by_name(user_characters, name):
     raise InvalidArgument(_t("character.invalid.notunique", name=name))
-
+  if main_status is None:
+    main_status = MainStatusEnum.OTHER
+    
   new_character = Character(
     name=name, 
     id_guild=id_guild, 
