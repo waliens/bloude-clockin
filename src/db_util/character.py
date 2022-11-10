@@ -2,7 +2,7 @@ import datetime
 from discord import InvalidArgument
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
-from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum, is_valid_class_role
+from db_util.wow_data import ClassEnum, MainStatusEnum, RoleEnum, SpecEnum, is_valid_class_role
 from models import Character
 
 from pycord18n.extension import _ as _t
@@ -16,7 +16,7 @@ def get_character_by_name(models, name):
   return [c for c in models if c.name.lower() == name.lower()][0]
 
 
-async def add_character(session, id_user: str, id_guild: str, name: str, role: RoleEnum, character_class: ClassEnum, spec: SpecEnum=None, is_main: bool=False):
+async def add_character(session, id_user: str, id_guild: str, name: str, role: RoleEnum, character_class: ClassEnum, spec: SpecEnum=None, main_status: MainStatusEnum=MainStatusEnum.MAIN):
   """Adds a character, if not exists
   Parameters
   ----------
@@ -35,9 +35,8 @@ async def add_character(session, id_user: str, id_guild: str, name: str, role: R
     The class of the character
   spec: SpecEnum (optional)
     The character's spec, None for no specific spec
-  is_main: bool (optional)
+  main_status: MainOrRerollEnum (optional)
     Whether or not the character should be the main one
-
 
   Returns
   -------
@@ -55,26 +54,25 @@ async def add_character(session, id_user: str, id_guild: str, name: str, role: R
   if len(user_characters) > 0 and has_character_by_name(user_characters, name):
     raise InvalidArgument(_t("character.invalid.notunique", name=name))
 
-
   new_character = Character(
     name=name, 
     id_guild=id_guild, 
     id_user=id_user, 
-    is_main=len(user_characters) == 0 or is_main, 
+    main_status=MainStatusEnum.MAIN if len(user_characters) == 0 else main_status, 
     created_at=datetime.datetime.now(),
     role=role,
     spec=spec,
     character_class=character_class
   )
 
-  if is_main:
-    await session.execute(update(Character).where(*where_clause).values(is_main=False))
+  if new_character.main_status != MainStatusEnum.OTHER:
+    await session.execute(update(Character).where(*where_clause, Character.main_status == new_character.main_status).values(main_status=MainStatusEnum.OTHER))
   session.add(new_character)
   await session.commit()
   return new_character
   
 
-async def update_character(session, id_user: str, id_guild: str, name: str, new_name: str = None, is_main: bool = False, role: RoleEnum=None, character_class: ClassEnum=None, spec: SpecEnum=None):
+async def update_character(session, id_user: str, id_guild: str, name: str, new_name: str = None, main_status: MainStatusEnum = None, role: RoleEnum=None, character_class: ClassEnum=None, spec: SpecEnum=None):
   """Updates a character
   Parameters
   ----------
@@ -88,8 +86,8 @@ async def update_character(session, id_user: str, id_guild: str, name: str, new_
     Name of the character to update
   new_name: str (optional)
     New name for the character
-  is_main: bool (optional)
-    New main status
+  main_status: MainOrRerollEnum (optional)
+    Whether or not the character should be the main one
   role: RoleEnum (optional)
     The role of the character
   character_class: ClassEnum (optional)
@@ -111,18 +109,18 @@ async def update_character(session, id_user: str, id_guild: str, name: str, new_
 
   current_character = get_character_by_name(user_characters, name)
 
-  if not current_character.is_main and is_main:
-    await session.execute(update(Character).where(*where_clause).values(is_main=False))
-
+  if main_status in {MainStatusEnum.MAIN, MainStatusEnum.REROLL}:
+    await session.execute(update(Character).where(*where_clause, Character.main_status == main_status).values(main_status=MainStatusEnum.OTHER))
+ 
   if new_name is not None:
     if has_character_by_name(user_characters, new_name):
       raise InvalidArgument(_t("character.invalid.notunique", name=new_name))
     current_character.name = new_name
   
-  if is_main is not None:
-    if not is_main:
+  if main_status is not None:
+    if current_character.main_status == MainStatusEnum.MAIN and main_status != MainStatusEnum.MAIN:
       raise InvalidArgument(_t("character.invalid.cannotunmain"))
-    current_character.is_main = new_name = True
+    current_character.main_status = main_status
 
   if role is not None:
     current_character.role = role
@@ -170,7 +168,7 @@ async def delete_character(session, id_user: str, id_guild: str, name: str):
     character = (await session.execute(select(Character).where(*where_clause))).scalars().one_or_none()
     if character is None:
       return
-    elif character.is_main:
+    elif character.main_status == MainStatusEnum.MAIN:
       raise InvalidArgument(_t("character.invalid.cannotdeletemain"))
     await session.delete(character)
     await session.commit()
@@ -187,7 +185,7 @@ async def get_character(session, id_guild, id_user, name=None):
     if name is not None:
       where_clause.append(Character.name.ilike(f"{name}"))
     else:
-      where_clause.append(Character.is_main)
+      where_clause.append(Character.main_status == MainStatusEnum.MAIN)
     results = await session.execute(select(Character).where(*where_clause))
     return results.scalars().one()
   except NoResultFound as e:

@@ -2,7 +2,7 @@ from discord import ButtonStyle, Interaction, InvalidArgument, Embed
 from discord.ui import View, Button
 
 from db_util.item import get_crafters, register_loot, register_user_recipes
-from db_util.wow_data import ProfessionEnum
+from db_util.wow_data import MainStatusEnum, ProfessionEnum
 from lang.util import localized_attr
 from models import GuildCharterField, Item, Loot, Recipe
 from ui.util import EMBED_DESCRIPTION_MAX_LENGTH, EMBED_FIELD_VALUE_MAX_LENGTH, ListEmbed, ListSelectorView
@@ -211,7 +211,7 @@ class RecipeCraftersEmbed(Embed):
       # filter characters (one per user, preferably the main )
       actual_characters = dict()
       for character in characters:
-        if character.id in actual_characters and not character.is_main:
+        if character.id in actual_characters and not character.main_status == MainStatusEnum.MAIN:
           continue
         actual_characters[character.id] = character
     

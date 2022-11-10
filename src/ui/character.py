@@ -3,7 +3,7 @@ import os
 from discord.ui import Button
 
 from ui.util import EMBED_DESCRIPTION_MAX_LENGTH
-from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
+from db_util.wow_data import ClassEnum, MainStatusEnum, RoleEnum, SpecEnum
 from discord import ButtonStyle, Interaction, InvalidArgument, Embed
 from discord.ui import View
 
@@ -54,14 +54,18 @@ class CharacterListEmbed(Embed):
     super().__init__(*args, **kwargs)
     if len(characters) > 0:
       formatted = list()
-      for c in characters:
+      for c in sorted(characters, key=lambda c: (c.main_status.value, c.name)):
         descriptor = ":" + {RoleEnum.HEALER: "ambulance", RoleEnum.MELEE_DPS: "crossed_swords", RoleEnum.RANGED_DPS: "bow_and_arrow", RoleEnum.TANK: "shield"}[c.role] + ":"
         descriptor += " "
-        if c.is_main:
+        if c.main_status == MainStatusEnum.MAIN:
           descriptor += "**"
+        elif c.main_status == MainStatusEnum.REROLL:
+          descriptor += "*"
         descriptor +=  c.name
-        if c.is_main:
+        if c.main_status == MainStatusEnum.MAIN:
           descriptor += "**"
+        elif c.main_status == MainStatusEnum.REROLL:
+          descriptor += "*"
         descriptor +=  f" ({c.character_class.name_hr}"
         if c.spec is not None:
           descriptor += f" {c.spec.name_hr.lower()}"

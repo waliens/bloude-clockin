@@ -10,7 +10,7 @@ from ui.character import CharacterListEmbed, SpecSelectionView
 
 from .util import default_if_none, get_applied_user_id, validate_character_name
 from db_util.character import add_character, get_character, update_character, delete_character
-from db_util.wow_data import ClassEnum, RoleEnum, SpecEnum
+from db_util.wow_data import ClassEnum, MainStatusEnum, RoleEnum, SpecEnum
 from models import Character
 
 from pycord18n.extension import _ as _t
@@ -28,7 +28,7 @@ class CharacterCog(commands.Cog):
     name: str, 
     role: RoleEnum, 
     character_class: Option(ClassEnum, "class"),
-    is_main: bool = False, 
+    main_status: Option(MainStatusEnum, description="Whether the character is a main or reroll.") = None, 
     for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None
   ):
     """Add a new character
@@ -46,14 +46,14 @@ class CharacterCog(commands.Cog):
             async def click_callback(spec: SpecEnum):
               async with self.bot.db_session_class() as sess:
                 async with sess.begin():
-                  character = await add_character(sess, user_id, guild_id, name, role, character_class, spec=spec, is_main=is_main)
-                  return _t("character.create.success", name=character.name, is_main=character.is_main)
+                  character = await add_character(sess, user_id, guild_id, name, role, character_class, spec=spec, main_status=main_status)
+                  return _t("character.create.success", name=character.name, main_status=character.main_status.name_hr)
 
             view = SpecSelectionView(click_callback, character_class, role)
             await ctx.respond(view=view, ephemeral=True)
           else:
-            character = await add_character(sess, user_id, guild_id, name, role, character_class, is_main=is_main)
-            await ctx.respond(_t("character.create.success", name=character.name, is_main=character.is_main), ephemeral=True)
+            character = await add_character(sess, user_id, guild_id, name, role, character_class, main_status=main_status)
+            await ctx.respond(_t("character.create.success", name=character.name, main_status=character.main_status.name_hr), ephemeral=True)
   
     except InvalidArgument as e:
       await ctx.respond(_t("character.create.error", error=str(e)), ephemeral=True)
@@ -63,7 +63,7 @@ class CharacterCog(commands.Cog):
   async def update(self, ctx, 
     name: str, 
     new_name: str = None, 
-    is_main: bool = None, 
+    main_status: Option(MainStatusEnum, description="Whether the character is a main or reroll.") = None, 
     for_user: Option(discord.Member, description="The user the character belongs to. By default, the user is you.") = None, 
     role: Option(RoleEnum, description="If specified, will also trigger spec update when relevant") = None, 
     character_class: Option(ClassEnum, name="class", description="If specified, will also trigger spec update when relevant") = None
@@ -71,7 +71,7 @@ class CharacterCog(commands.Cog):
     """Update a character (by name)
     """
     try:
-      if is_main is None and new_name is None and role is None and character_class is None:
+      if main_status is None and new_name is None and role is None and character_class is None:
         raise InvalidArgument(_t("character.update.nothingtochange"))
 
       name = validate_character_name(name)
@@ -90,15 +90,15 @@ class CharacterCog(commands.Cog):
             async def click_callback(spec: SpecEnum):
               async with self.bot.db_session_class() as sess:
                 async with sess.begin():
-                  character = await update_character(sess, user_id, guild_id, name, new_name, is_main=is_main, role=final_role, spec=spec, character_class=final_class)
-                  return _t("character.update.success", name=character.name, is_main=character.is_main)
+                  character = await update_character(sess, user_id, guild_id, name, new_name, main_status=main_status, role=final_role, spec=spec, character_class=final_class)
+                  return _t("character.update.success", name=character.name, main_status=character.main_status.name_hr)
 
             view = SpecSelectionView(click_callback, final_class, final_role)
             await ctx.respond(view=view, ephemeral=True)
           
           else:
-            character = await update_character(sess, user_id, guild_id, name, new_name, is_main=is_main, role=role, character_class=character_class)
-            await ctx.respond(_t("character.update.success", name=character.name, is_main=character.is_main), ephemeral=True)
+            character = await update_character(sess, user_id, guild_id, name, new_name, main_status=main_status, role=role, character_class=character_class)
+            await ctx.respond(_t("character.update.success", name=character.name, main_status=character.main_status.name_hr), ephemeral=True)
     
     except InvalidArgument as e:
       await ctx.respond(_t("character.update.error", error=str(e)), ephemeral=True)
@@ -139,7 +139,7 @@ class CharacterCog(commands.Cog):
           query = select(Character).where(
             Character.id_user == user_id,
             Character.id_guild == guild_id
-          ).order_by(Character.is_main.desc(), Character.name.asc())
+          ).order_by(Character.main_status.desc(), Character.name.asc())
           characters = (await sess.execute(query)).scalars().all()
           embed = CharacterListEmbed(characters)
           await ctx.respond(embed=embed, ephemeral=not public)
@@ -163,7 +163,7 @@ class CharacterCog(commands.Cog):
       async with sess.begin():
         where_clause = [Character.id_guild == guild_id]
         if main_only:
-          where_clause.append(Character.is_main == True)
+          where_clause.append(Character.main_status == MainStatusEnum.MAIN)
         if character_class is not None:
           where_clause.append(Character.character_class == character_class)
         if role is not None:
