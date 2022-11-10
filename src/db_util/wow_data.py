@@ -428,3 +428,13 @@ class ProfessionEnum(HumanReadableEnum):
   @property
   def i18n_prefix(self):
     return "wow.profession"
+
+
+class MainOrRerollEnum(HumanReadableEnum):
+  MAIN = 1
+  REROLL = 2
+  OTHER = 3
+
+  @property
+  def i18n_prefix(self):
+    return "util.mainorreroll"
