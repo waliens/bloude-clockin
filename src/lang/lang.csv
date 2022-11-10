@@ -18,7 +18,7 @@ attendance.report.attendance_for,"Attendances for {char_name}","Participations d
 attendance.report.for_raids_in,"For raids from {_from} to {_to}.","Pour les raids de {_from} à {_to}."
 attendance.report.raids,"Raids","Raids"
 character.create.error,"Cannot add a character: {error}.","Impossible d'ajouter un personnage: {error}."
-character.create.success,"The new character '{name}' was added (status: {main_status}).","Le nouveau personnage '{name}' a été ajouté (status: {main_status})."
+character.create.success,"The new character '{name}' was added (status: {main_status}).","Le nouveau personnage '{name}' a été ajouté (statut: {main_status})."
 character.delete.error,"Cannot delete the character: {error}.","Impossible de supprimer le personnage: {error}."
 character.delete.success,"The character was sucessfully deleted, or did not exist.","Le personnage a été supprimé avec succès, ou n'existait pas."
 character.invalid.cannotdeletemain,"cannot delete the main character","impossible de supprimer le personnage principal"
