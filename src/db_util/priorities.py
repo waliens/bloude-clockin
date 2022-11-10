@@ -197,7 +197,7 @@ def format_role_list(roles, role_names_map: dict):
   return [role_names_map.get(role, "???") for role in roles]
 
 
-async def generate_prio_str_for_item(sess, id_guild, item: Item, item_priority: ItemWithPriority, item_level: int, role_names_map: dict= None, character_map: dict = None, loots_per_char: dict = None):
+async def generate_prio_str_for_item(sess, id_guild, item: Item, item_priority: ItemWithPriority, item_level: int, role_names_map: dict= None, character_map: dict = None, user_dkp_map: dict = None, loots_per_char: dict = None):
   """
   Parameters
   ----------
@@ -214,6 +214,8 @@ async def generate_prio_str_for_item(sess, id_guild, item: Item, item_priority: 
     Map a role tuple with its actual name
   characters_map: dict
     Maps role tuple with a list of characters
+  user_dkp_map: dict
+    Maps a user identifier with its dkp score
   loots_per_char: dict
     Maps character id with its loots for the slot if the item
 
@@ -252,7 +254,8 @@ async def generate_prio_str_for_item(sess, id_guild, item: Item, item_priority: 
       sublevel_characters = list()
       for role in sublevel:
         found_characters = list()
-        for char, char_dkp in character_map[role]: 
+        for char, _ in sorted(character_map[role], key=lambda t: t[0].main_status.value): 
+          user_dkp = user_dkp_map[char.id_user]
           # has looted the same item ?
           if char.id in characters_have_looted:
             continue
@@ -264,7 +267,7 @@ async def generate_prio_str_for_item(sess, id_guild, item: Item, item_priority: 
             if tier.value >= best_loot_tier.value and item_level <= best_loot.item.metadata_["ItemLevel"]:
               continue 
             char_ilvl = str(best_loot.item.metadata_["ItemLevel"])
-          found_characters.append(f"{char.name} ({char_dkp}, {char_ilvl})")
+          found_characters.append(f"{char.name} ({user_dkp}, {char_ilvl})")
         sublevel_characters.extend(found_characters)
       if len(sublevel_characters) == 0:
         continue

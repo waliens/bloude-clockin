@@ -6,7 +6,7 @@ from discord import InvalidArgument, Client
 from sqlalchemy import select, Integer
 from db_util.dkp import compute_dkp_score
 from db_util.priorities import PrioTierEnum, generate_prio_str_for_item
-from db_util.wow_data import ItemInventoryTypeEnum
+from db_util.wow_data import ItemInventoryTypeEnum, MainStatusEnum
 from gsheet.parse_priorities import PrioParser
 from gsheet_helpers import get_creds
 from models import Character, GuildSettings, Item, Loot
@@ -58,7 +58,7 @@ async def create_characters_table(sess, guild_id):
       character.character_class.name,
       character.role.name,
       "" if character.spec is None else character.spec.name,
-      character.is_main,
+      character.main_status.name_hr,
       character.id_user
     ])
   
@@ -139,7 +139,7 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
     Maps role tuples with its str name
   """
   # read main characters list
-  where_clause = [Character.is_main == True, Character.id_guild == id_guild]
+  where_clause = [Character.main_status != MainStatusEnum.OTHER, Character.id_guild == id_guild]
 
   # role filtering
   settings = await sess.get(GuildSettings, id_guild)
@@ -159,6 +159,11 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
   for char in characters:
     char_dkp = await compute_dkp_score(sess, char, priorities)
     char_dict[(char.character_class, char.role, char.spec)].append((char, char_dkp))
+
+  user_dkp_dict = defaultdict(lambda: 0)
+  for characters in char_dict.values():
+    for char, dkp in characters:
+      user_dkp_dict[char.id_user] += dkp
 
   # generate sheet table 
   per_class_sheet_table = list()
@@ -190,7 +195,6 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
   for slot, item_ids in per_slot.items():
     current_row = len(per_class_sheet_table) + 1
     slot_header_cell_merges.append(current_row)
-
     loots_per_character = await loots_for_slots(sess, slot, char_dict, priorities)
 
     # read current item lists
@@ -205,9 +209,21 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
       item = item_index[item_id]
       row_header = [item.id, localized_attr(item, 'name'), item.metadata_["ItemLevel"]]
       # per_class
-      per_class_prio_dict = await generate_prio_str_for_item(sess, id_guild, item, priorities[item_id], item.metadata_["ItemLevel"], role2name, loots_per_char=loots_per_character)
+      per_class_prio_dict = await generate_prio_str_for_item(
+        sess, id_guild, 
+        item, priorities[item_id], 
+        item.metadata_["ItemLevel"], 
+        role2name, 
+        loots_per_char=loots_per_character)
       per_class_sheet_table.append(row_header + [per_class_prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()])
-      per_char_prio_dict = await generate_prio_str_for_item(sess, id_guild, item, priorities[item_id], item.metadata_["ItemLevel"], role2name, char_dict, loots_per_char=loots_per_character)
+      # per char
+      per_char_prio_dict = await generate_prio_str_for_item(
+        sess, id_guild, 
+        item, priorities[item_id], 
+        item.metadata_["ItemLevel"], 
+        role2name, 
+        char_dict, user_dkp_dict, 
+        loots_per_char=loots_per_character)
       per_char_sheet_table.append(row_header + [per_char_prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()])
 
   # actually generate the sheet
