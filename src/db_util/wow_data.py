@@ -430,7 +430,7 @@ class ProfessionEnum(HumanReadableEnum):
     return "wow.profession"
 
 
-class MainOrRerollEnum(HumanReadableEnum):
+class MainStatusEnum(HumanReadableEnum):
   MAIN = 1
   REROLL = 2
   OTHER = 3

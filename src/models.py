@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects import postgresql
 
 
-from db_util.wow_data import MainOrRerollEnum, ProfessionEnum, RaidSizeEnum, RoleEnum, ClassEnum, SpecEnum
+from db_util.wow_data import MainStatusEnum, ProfessionEnum, RaidSizeEnum, RoleEnum, ClassEnum, SpecEnum
 
 Base = declarative_base()
 
@@ -34,7 +34,7 @@ class Character(Base):
   id_guild = Column(String(22))
   id_user = Column(String(22))
   name = Column(String(255))
-  is_main = Column(MainOrRerollEnum)
+  main_status = Column(Enum(MainStatusEnum))
   role = Column(Enum(RoleEnum))
   spec = Column(Enum(SpecEnum), nullable=True)
   character_class = Column(Enum(ClassEnum))
