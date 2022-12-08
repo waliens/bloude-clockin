@@ -2,7 +2,7 @@ import pygsheets
 
 from collections import defaultdict
 from pygsheets import Spreadsheet, Worksheet, Cell, DataRange
-from discord import InvalidArgument, Client
+from discord import Guild, InvalidArgument, Client, Role
 from sqlalchemy import select, Integer
 from db_util.dkp import compute_dkp_score
 from db_util.priorities import PrioTierEnum, generate_prio_str_for_item
@@ -126,7 +126,7 @@ async def loots_for_slots(sess, slot: InventorySlotEnum, char_map: dict, priorit
   
   return loot_per_character
 
-async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priorities: dict, role2name: dict, per_class=False):
+async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, priorities: dict, role2name: dict, per_class=False):
   """
   Parameters
   ----------
@@ -139,15 +139,14 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
     Maps role tuples with its str name
   """
   # read main characters list
-  where_clause = [Character.main_status != MainStatusEnum.OTHER, Character.id_guild == id_guild]
+  where_clause = [Character.main_status != MainStatusEnum.OTHER, Character.id_guild == str(guild.id)]
 
   # role filtering
-  settings = await sess.get(GuildSettings, id_guild)
+  settings = await sess.get(GuildSettings, str(guild.id))
   id_prio_role = settings.id_prio_role
   if id_prio_role is not None:
-    guild = await client.fetch_guild(id_guild)
     role = guild.get_role(int(settings.id_prio_role))
-    user_ids = [member.id for member in role.members]
+    user_ids = [str(member.id) for member in role.members]
     if len(user_ids) > 0:  # only if there are actually users with this tag
       where_clause.append(Character.id_user.in_(user_ids))
 
@@ -210,7 +209,7 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
       row_header = [item.id, localized_attr(item, 'name'), item.metadata_["ItemLevel"]]
       # per_class
       per_class_prio_dict = await generate_prio_str_for_item(
-        sess, id_guild, 
+        sess, str(guild.id), 
         item, priorities[item_id], 
         item.metadata_["ItemLevel"], 
         role2name, 
@@ -218,7 +217,7 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
       per_class_sheet_table.append(row_header + [per_class_prio_dict.get(t, " ") for t in PrioTierEnum.useful_tiers()])
       # per char
       per_char_prio_dict = await generate_prio_str_for_item(
-        sess, id_guild, 
+        sess, str(guild.id), 
         item, priorities[item_id], 
         item.metadata_["ItemLevel"], 
         role2name, 
@@ -251,8 +250,8 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, id_guild, priori
   return wksheets
 
 
-async def export_in_worksheets(sess, client: Client, guild_id):
-  settings = await sess.get(GuildSettings, guild_id)
+async def export_in_worksheets(sess, client: Client, guild: Guild):
+  settings = await sess.get(GuildSettings, str(guild.id))
 
   if settings is None or settings.id_export_gsheet is None:
     raise InvalidArgument(_t("settings.gsheet.invalid.notconfigured"))
@@ -260,13 +259,13 @@ async def export_in_worksheets(sess, client: Client, guild_id):
   gc = pygsheets.authorize(custom_credentials=get_creds())
   full_sheet = gc.open_by_key(settings.id_export_gsheet)
   
-  characters_table = await create_characters_table(sess, guild_id)
+  characters_table = await create_characters_table(sess, str(guild.id))
   chr_worksheet = create_worksheet(full_sheet, "gci_characters", characters_table)
-  loots_table = await create_loot_table(sess, guild_id)
+  loots_table = await create_loot_table(sess, str(guild.id))
   lts_worksheet = create_worksheet(full_sheet, "gci_loots", loots_table)
 
   # parse prio
   prio_parser = PrioParser(full_sheet)
-  char_prio_sheet, class_prio_sheet = await generate_prio_sheets(sess, client, gc, full_sheet, guild_id, prio_parser._item_prio, prio_parser._role2name)
+  char_prio_sheet, class_prio_sheet = await generate_prio_sheets(sess, client, gc, full_sheet, guild, prio_parser._item_prio, prio_parser._role2name)
 
   return chr_worksheet, lts_worksheet, char_prio_sheet, class_prio_sheet, prio_parser
