@@ -123,12 +123,14 @@ class SettingsCog(commands.Cog):
   @gsheet_settings.command(description="Trigger data export to the Google spreadsheet.")
   @commands.has_permissions(administrator=True)
   @guild_only()
-  async def export(self, ctx):
+  async def export(self, ctx,
+    for_event: Option(str, description="Id of a raid-helper event")=None
+  ):
     try:
       async with ctx.bot.db_session_class() as sess:
         async with sess.begin():
           await ctx.defer(ephemeral=True)
-          _, _, _, _, parser = await export_in_worksheets(sess, self._bot, ctx.guild)
+          _, _, _, _, parser = await export_in_worksheets(sess, self._bot, ctx.guild, for_event=for_event)
           if len(parser.errors) == 0:
             await ctx.respond(_t("settings.gsheet.export.success"), ephemeral=True)
           else:

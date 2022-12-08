@@ -6,6 +6,7 @@ from discord import Guild, InvalidArgument, Client, Role
 from sqlalchemy import select, Integer
 from db_util.dkp import compute_dkp_score
 from db_util.priorities import PrioTierEnum, generate_prio_str_for_item
+from db_util.raid_helper import extract_raid_helpers_data
 from db_util.wow_data import ItemInventoryTypeEnum, MainStatusEnum
 from gsheet.parse_priorities import PrioParser
 from gsheet_helpers import get_creds
@@ -126,17 +127,20 @@ async def loots_for_slots(sess, slot: InventorySlotEnum, char_map: dict, priorit
   
   return loot_per_character
 
-async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, priorities: dict, role2name: dict, per_class=False):
+
+async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, priorities: dict, role2name: dict, for_event: str=None):
   """
   Parameters
   ----------
   sheet: pygsheets.SpreadSheet
     The worksheet will be generated/replaced here
   id_guild: [int|str]
-    Guild identifierµ
+    Guild identifier
   priorities: Mapping[int,ItemWithPriority]
   role2name: Mapping[tuple,str]
     Maps role tuples with its str name
+  for_event: str
+    Only use users from a RaidHelper event (ignoring role filtering if set)
   """
   # read main characters list
   where_clause = [Character.main_status != MainStatusEnum.OTHER, Character.id_guild == str(guild.id)]
@@ -144,7 +148,11 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, pr
   # role filtering
   settings = await sess.get(GuildSettings, str(guild.id))
   id_prio_role = settings.id_prio_role
-  if id_prio_role is not None:
+
+  if for_event is not None:
+    _, registered, _ = await extract_raid_helpers_data(sess, int(for_event), str(guild.id))
+    where_clause.append(Character.id.in_([character.id for character in registered]))
+  elif id_prio_role is not None:
     role = guild.get_role(int(settings.id_prio_role))
     user_ids = [str(member.id) for member in role.members]
     if len(user_ids) > 0:  # only if there are actually users with this tag
@@ -250,7 +258,7 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, pr
   return wksheets
 
 
-async def export_in_worksheets(sess, client: Client, guild: Guild):
+async def export_in_worksheets(sess, client: Client, guild: Guild, for_event: str=None):
   settings = await sess.get(GuildSettings, str(guild.id))
 
   if settings is None or settings.id_export_gsheet is None:
@@ -266,6 +274,6 @@ async def export_in_worksheets(sess, client: Client, guild: Guild):
 
   # parse prio
   prio_parser = PrioParser(full_sheet)
-  char_prio_sheet, class_prio_sheet = await generate_prio_sheets(sess, client, gc, full_sheet, guild, prio_parser._item_prio, prio_parser._role2name)
+  char_prio_sheet, class_prio_sheet = await generate_prio_sheets(sess, client, gc, full_sheet, guild, prio_parser._item_prio, prio_parser._role2name, for_event=for_event)
 
   return chr_worksheet, lts_worksheet, char_prio_sheet, class_prio_sheet, prio_parser
