@@ -23,7 +23,7 @@ class GuildClockInBot(commands.Bot):
 
     for cog_ext in cog_exts:
       cog_full_ext = f"cogs.{cog_ext}"
-      result = self.load_extension(cog_full_ext)
+      result = self.load_extension(cog_full_ext, store=True)
       if isinstance(result[cog_full_ext], bool):
         logging.getLogger().info("loading '{}': successful".format(cog_full_ext))
       else:
