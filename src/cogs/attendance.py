@@ -92,8 +92,14 @@ class AttendanceCog(commands.Cog):
       user_id = get_applied_user_id(ctx, for_user, str(ctx.author.id))
       guild_id = str(ctx.guild_id)
 
-      date_from = parse_date(date_from, default=datetime.date.today())
-      date_to = parse_date(date_to, default=datetime.date.today())
+      if date_from is None:
+        date_to = parse_date(date_to, default=datetime.date.today())
+        date_from = date_to - datetime.timedelta(days=30)
+      elif date_to is None:
+        date_from = parse_date(date_from)
+        date_to = date_from + datetime.timedelta(days=30)
+      else:
+        date_to, date_from = parse_date(date_to), parse_date(date_from)
 
       async with self.bot.db_session_class() as sess:
         async with sess.begin():
