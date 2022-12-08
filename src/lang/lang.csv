@@ -60,6 +60,7 @@ charter.unsigned.title,"Have not signed the charter yet","N'ont pas encore sign�
 charter.unsigned.withrole,"With role <@&{role_id}>","Avec le rôle <@&{role_id}>"
 general.cancel,"Cancel","Annuler"
 general.confirm,"Confirm","Confirmer"
+general.confirm_and_continue,"Confirm and continue","Confirmer et continuer"
 general.cancelled,"Cancelled.","Annulé."
 general.no_data,"No data.","Pas de donnée."
 general.invalid.adminrequired,"requires admin permissions","nécessite les permissions d'administrateur"

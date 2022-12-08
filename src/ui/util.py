@@ -1,6 +1,7 @@
 
 
 from abc import abstractmethod
+from functools import partial
 from discord.ui import Button, Select, Modal, InputText, View
 from discord import ButtonStyle, InputTextStyle, Interaction, InvalidArgument, SelectOption, Embed
 
@@ -47,6 +48,23 @@ class CancelButton(Button):
 class ConfirmButton(Button):
   def __init__(self, confirm_callback=None, *args, **kwargs):
     super().__init__(style=ButtonStyle.primary, label=_t("general.confirm"), *args, **kwargs)
+    self._confirm_callback = confirm_callback
+
+  @property
+  def confirm_callback(self):
+    return self._confirm_callback
+  
+  @confirm_callback.setter
+  def confirm_callback(self, clbk):
+    self._confirm_callback = clbk
+
+  async def callback(self, interaction: Interaction):
+    await self._confirm_callback(interaction)
+
+
+class ConfirmAndContinueButton(Button):
+  def __init__(self, confirm_callback=None, *args, **kwargs):
+    super().__init__(style=ButtonStyle.primary, label=_t("general.confirm_and_continue"), *args, **kwargs)
     self._confirm_callback = confirm_callback
 
   @property
@@ -211,23 +229,31 @@ class ListSelectorView(View):
 
 
 class MultiSelectView(View):
-  def __init__(self, bot, selects, *args, check_for_values=True, **kwargs):
+  def __init__(self, bot, selects, *args, check_for_values=True, allow_multiple=False, **kwargs):
     super().__init__(*args, **kwargs)
     self._bot = bot
     self._selects = selects
     self._cancel_button = CancelButton()
     self._check_for_values = check_for_values
+    self._allow_multiple = allow_multiple
 
-    async def _confirm_callback(interaction: Interaction):
+    async def _confirm_callback(interaction: Interaction, repeat: bool=False):
       try:
         self.disable_all_items()
         selected_values = [select.values for select in self._selects]
         if self._check_for_values and any(len(vs) == 0 for vs in selected_values):
           raise NoSelectionException()
-        await self.confirm_callback(*selected_values)
-        self.stop()
-        self.clear_items()
-        await interaction.response.edit_message(**self.success_message())
+
+        if self._allow_multiple and repeat:
+          await self.confirm_callback(*selected_values)
+          self.enable_all_items()
+          await interaction.response.edit_message()
+        else:
+          await self.confirm_callback(*selected_values)
+          self.stop()
+          self.clear_items()
+          await interaction.response.edit_message(**self.success_message())
+
       except NoSelectionException as e:
         self.enable_all_items()
         return await interaction.response.edit_message(content=str(e))
@@ -240,6 +266,11 @@ class MultiSelectView(View):
     for select in self._selects:
       self.add_item(select)
     self.add_item(self._validate_button)
+    
+    if self._allow_multiple:
+      self._validate_and_continue_button = ConfirmAndContinueButton(confirm_callback=partial(_confirm_callback, repeat=True))
+      self.add_item(self._validate_and_continue_button)
+    
     self.add_item(self._cancel_button)
 
   @abstractmethod

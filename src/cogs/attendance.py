@@ -37,7 +37,7 @@ class AttendanceCog(commands.Cog):
         async with sess.begin():
           character = await get_character(sess, guild_id, user_id, name=char_name)
           raids = await get_raids(sess, open_only=True)
-          view = AttendanceRaidSelectView(self.bot, raids, character.id, raid_datetime)
+          view = AttendanceRaidSelectView(self.bot, raids, character.id, raid_datetime, allow_multiple=True)
           await ctx.respond(
             _t("attendance.add.locking_in", char_name=character.name, lock_time=raid_datetime.strftime('%d/%m/%Y %H:%M')), 
             view=view, 
