@@ -128,7 +128,7 @@ async def loots_for_slots(sess, slot: InventorySlotEnum, char_map: dict, priorit
   return loot_per_character
 
 
-async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, priorities: dict, role2name: dict, for_event: str=None):
+async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, priorities: dict, role2name: dict, for_event: str=None, phase: int=-1):
   """
   Parameters
   ----------
@@ -141,6 +141,8 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, pr
     Maps role tuples with its str name
   for_event: str
     Only use users from a RaidHelper event (ignoring role filtering if set)
+  phase: int
+    A phase number, only items from this phase will be displayed. -1 for last phase only, 0 for all phases.
   """
   # read main characters list
   where_clause = [Character.main_status != MainStatusEnum.OTHER, Character.id_guild == str(guild.id)]
@@ -197,6 +199,10 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, pr
     item_index[item_id] = item
     inventory_type = ItemInventoryTypeEnum(item.metadata_["InventoryType"])
     per_slot[inventory_type.get_slot()].append(item_id)
+
+  # check phase
+  if phase == -1:
+    phase = max([prio.metadata["phase"] for prio in priorities.values()])
   
   slot_header_cell_merges = list()
   for slot, item_ids in per_slot.items():
@@ -213,6 +219,8 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, pr
       per_char_sheet_table.append([ItemInventoryTypeEnum.NON_EQUIPABLE.name_hr])
 
     for item_id in item_ids:
+      if phase != 0 and priorities[item_id].metadata["phase"] != phase:
+        continue
       item = item_index[item_id]
       row_header = [item.id, localized_attr(item, 'name'), item.metadata_["ItemLevel"]]
       # per_class

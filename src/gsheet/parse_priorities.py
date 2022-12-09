@@ -61,13 +61,13 @@ class PrioParser(object):
     return name_map
 
   def _read_prio_sheet(self, ws: Worksheet):
-    PRIO_COLUMNS = ['id', 'boss', 'comment']
+    PRIO_COLUMNS = ['id', 'boss', 'phase', 'comment']
     values = ws.get_all_values()
     headers = values[0]
     columns = {header: headers.index(header) for header in PRIO_COLUMNS}
     errors = dict()
     items = dict()
-    row_offset, col_offset = 1, 6
+    row_offset, col_offset = 1, 7
     for row_index, row in enumerate(values[row_offset:]):
       try:
         if len(row[columns["id"]].strip()) == 0:
@@ -92,7 +92,8 @@ class PrioParser(object):
         items[item_id] = ItemWithPriority(
           item_id=item_id,
           priority_list=PriorityList(priorities),
-          boss=row[columns["boss"]]
+          boss=row[columns["boss"]],
+          phase=int(row[columns["phase"]])
         )
       except ParseError as e:
         errors[e.row] = e

@@ -188,6 +188,10 @@ class ItemWithPriority(object):
   def priority_list(self):
     return self._priority_list
 
+  @property
+  def metadata(self):
+    return self._metadata
+
 
 def empty_prio_str_dict():
   return {}
