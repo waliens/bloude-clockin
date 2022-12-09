@@ -187,6 +187,7 @@ help.settings.gsheet.set.option.identifier,"The Google spreadsheet identifier.",
 help.settings.gsheet.account.desc,"Displays the name of the bot Google account.","Affiche le nom du compte Google du boot."
 help.settings.gsheet.export.desc,"Trigger data export to the Google spreadsheet.","Déclenche l'export de données vers la spreadsheet Google."
 help.settings.gsheet.option.for_event,"Identifier of a RaidHelper event.","Identifiant d'un événement RaidHelper."
+help.settings.gsheet.option.phase,"Phase number to filter in (-1 for last phase only, 0 for all phases).","Numéro de phase à afficher exclusivement (-1 pour la dernière phase seulement, 0 pour toutes les phases)."
 help.settings.prio_role.desc,"Set role used for user selection in item prioritization.","Mise à jour du role pour la sélection des utilisateurs pour la prioritarisation des items."
 help.settings.prio_role.option.role,"The Discord role to consider for priorities. Don't specify a value for disabling prio role.","Le rôle Discord à considérer pour les priorités. Ne pas spécifier pour désactiver le filtrage par rôle."
 item.add.success,"Loot registered.","Loot enregistré."

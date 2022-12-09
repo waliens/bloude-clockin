@@ -128,7 +128,7 @@ async def loots_for_slots(sess, slot: InventorySlotEnum, char_map: dict, priorit
   return loot_per_character
 
 
-async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, priorities: dict, role2name: dict, for_event: str=None, phase: int=-1):
+async def generate_prio_sheets(sess, gc, sheet, guild: Guild, priorities: dict, role2name: dict, for_event: str=None, phase: int=-1):
   """
   Parameters
   ----------
@@ -266,7 +266,7 @@ async def generate_prio_sheets(sess, client: Client, gc, sheet, guild: Guild, pr
   return wksheets
 
 
-async def export_in_worksheets(sess, client: Client, guild: Guild, for_event: str=None):
+async def export_in_worksheets(sess, guild: Guild, for_event: str=None, phase: int=-1):
   settings = await sess.get(GuildSettings, str(guild.id))
 
   if settings is None or settings.id_export_gsheet is None:
@@ -282,6 +282,6 @@ async def export_in_worksheets(sess, client: Client, guild: Guild, for_event: st
 
   # parse prio
   prio_parser = PrioParser(full_sheet)
-  char_prio_sheet, class_prio_sheet = await generate_prio_sheets(sess, client, gc, full_sheet, guild, prio_parser._item_prio, prio_parser._role2name, for_event=for_event)
+  char_prio_sheet, class_prio_sheet = await generate_prio_sheets(sess, gc, full_sheet, guild, prio_parser._item_prio, prio_parser._role2name, for_event=for_event, phase=phase)
 
   return chr_worksheet, lts_worksheet, char_prio_sheet, class_prio_sheet, prio_parser

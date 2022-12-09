@@ -124,13 +124,14 @@ class SettingsCog(commands.Cog):
   @commands.has_permissions(administrator=True)
   @guild_only()
   async def export(self, ctx,
-    for_event: Option(str, description="Id of a raid-helper event")=None
+    for_event: Option(str, description="Id of a raid-helper event")=None,
+    phase: Option(int, description="Phase number (-1 one for last phase only, 0 for all phases)")=-1
   ):
     try:
       async with ctx.bot.db_session_class() as sess:
         async with sess.begin():
           await ctx.defer(ephemeral=True)
-          _, _, _, _, parser = await export_in_worksheets(sess, self._bot, ctx.guild, for_event=for_event)
+          _, _, _, _, parser = await export_in_worksheets(sess, ctx.guild, for_event=for_event, phase=phase)
           if len(parser.errors) == 0:
             await ctx.respond(_t("settings.gsheet.export.success"), ephemeral=True)
           else:
