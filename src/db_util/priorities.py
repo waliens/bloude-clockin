@@ -240,6 +240,9 @@ async def generate_prio_str_for_item(sess, id_guild, item: Item, item_priority: 
       for tier in PrioTierEnum
       if priority.tier_has_roles(tier)
     }
+
+  if loots_per_char is None:
+    loots_per_char = defaultdict(list)
   
   # consider already looted items
   already_looted_query = select(Loot).where(Loot.id_item == item_id, Loot.character.has(Character.id_guild == id_guild))
@@ -263,14 +266,16 @@ async def generate_prio_str_for_item(sess, id_guild, item: Item, item_priority: 
           # has looted the same item ?
           if char.id in characters_have_looted:
             continue
-          # has looted an upgrade ? (only if equippable and not a bis)
           char_ilvl = "-"
-          if item_slot is not None and tier is not PrioTierEnum.IS_BIS and loots_per_char is not None and len(loots_per_char[char.id]) > 0:
+          if len(loots_per_char[char.id]) > 0:
+            best_loot, _ = loots_per_char[char.id][0]
+            char_ilvl = str(best_loot.item.metadata_["ItemLevel"])
+          # has looted an upgrade ? (only if equippable and not a bis)
+          if item_slot is not None and tier is not PrioTierEnum.IS_BIS and len(loots_per_char[char.id]) > 0:
             char_loots = loots_per_char[char.id]
             best_loot, best_loot_tier = char_loots[0]
             if tier.value >= best_loot_tier.value and item_level <= best_loot.item.metadata_["ItemLevel"]:
               continue 
-            char_ilvl = str(best_loot.item.metadata_["ItemLevel"])
           found_characters.append(f"{char.name} ({user_dkp}, {char_ilvl})")
         sublevel_characters.extend(found_characters)
       if len(sublevel_characters) == 0:
