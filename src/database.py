@@ -18,8 +18,9 @@ def get_db_url(with_async=True):
   password = os.getenv("POSTGRES_PASSWORD")
   host = os.getenv("POSTGRES_HOST")
   dbname = os.getenv("POSTGRES_DB")
+  port = os.getenv("POSTGRES_PORT", "5432")
   driver = "asyncpg" if with_async else "psycopg2"
-  return "postgresql+{}://{}:{}@{}/{}".format(driver, username, password, host, dbname)
+  return "postgresql+{}://{}:{}@{}:{}/{}".format(driver, username, password, host, port, dbname)
 
 
 async def add_raids(session):
