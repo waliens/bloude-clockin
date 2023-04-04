@@ -1,5 +1,5 @@
 
-from discord import ApplicationContext, Bot, Embed,Interaction, InvalidArgument, Option, Role, SlashCommandGroup, guild_only
+from discord import ApplicationContext, Bot, Embed,Interaction, InvalidArgument, Member, Option, Role, SlashCommandGroup, guild_only
 from discord.ext import commands
 from sqlalchemy import update
 from db_util.charter import get_guild_charter
@@ -52,8 +52,9 @@ class GuildInfoCog(commands.Cog):
         charter.id_sign_role = str(sign_role.id)
         charter.id_sign_channel = str(ctx.channel_id)
         embed = GuildCharterEmbed(charter, sign_info=True)
-        interaction = await ctx.send(embed=embed)
-        charter.id_sign_message = str(interaction.id)
+        interaction = await ctx.respond(embed=embed, ephemeral=False)
+        response = await interaction.original_response()
+        charter.id_sign_message = str(response.id)
         sess.add(charter)
         await sess.commit()
         
