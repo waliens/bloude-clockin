@@ -80,6 +80,7 @@ class Attendance(Base):
   raid_size = Column(Enum(RaidSizeEnum))
   cancelled = Column(Boolean)  # if user cancelled his attendance post-registration (on a raid helper for instance)
   is_guild_event = Column(Boolean, default=False, nullable=False)
+  in_dkp = Column(Boolean, default=True, nullable=False)
   
   character = relationship("Character", lazy="joined")
   raid = relationship("Raid", lazy="joined")

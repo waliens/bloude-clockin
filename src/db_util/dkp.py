@@ -2,7 +2,7 @@ from abc import abstractmethod
 from db_util.priorities import PrioTierEnum
 from models import Attendance, Character, Raid, Loot
 from db_util.wow_data import RaidSizeEnum
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 
 class AbstrackDKPSystem(object):
@@ -53,7 +53,7 @@ async def compute_dkp_score(sess, character: Character, priorities: dict, dkp_sy
     dkp += dkp_system.get_loot_points(loot, tier)
 
   # add from attendance
-  dkp_attendances_query = select(Attendance).where(Attendance.id_character == character.id)
+  dkp_attendances_query = select(Attendance).where(Attendance.id_character == character.id, Attendance.in_dkp == True)
   dkp_attendances_results = await sess.execute(dkp_attendances_query)
   dkp_attendances = dkp_attendances_results.scalars().all()
 
@@ -61,3 +61,11 @@ async def compute_dkp_score(sess, character: Character, priorities: dict, dkp_sy
     dkp += dkp_system.get_raid_points(attendance)
 
   return dkp
+
+async def reset_dkp(sess, guild_id: int):
+  character_select = select(Character.c.id).where(Character.id_guild == guild_id)
+  update_attendances = update(Attendance).where(Attendance.id_character.in_(character_select)).values(in_dkp=False)
+  update_loots = update(Loot).where(Loot.id_character.in_(character_select)).values(in_dkp=False)
+
+  await sess.execute(update_attendances)
+  await sess.execute(update_loots)

@@ -3,6 +3,7 @@ from discord import guild_only, SlashCommandGroup, Option, InvalidArgument, Role
 from discord.ext import commands
 from pycord18n.extension import _ as _t, I18nExtension
 from cogs.util import parse_datetime
+from db_util.dkp import reset_dkp
 from db_util.raid import get_raids
 from gsheet.export import export_in_worksheets
 from gsheet_helpers import SheetStateEnum, check_sheet, make_bot_guser_name
@@ -178,6 +179,19 @@ class SettingsCog(commands.Cog):
           
     except InvalidArgument as e:
       await ctx.respond(_t("settings.prio.role.error", error=str(e)))
+
+  @settings_group.command(description="")
+  @commands.has_permissions(administrator=True)
+  @guild_only
+  async def reset_dkp(self, ctx):
+    try:
+      guild_id = str(ctx.guild.id)
+      async with ctx.bot.db_session_class() as sess:
+        async with sess.begin():
+          await reset_dkp(guild_id)
+          await ctx.respond(_t("settings.reset_dkp.success"), ephemeral=True)
+    except InvalidArgument as e:
+      await ctx.respond(_t("settings.reset_dkp.error", error=str(e)))
 
 def setup(bot):
   bot.add_cog(SettingsCog(bot))
