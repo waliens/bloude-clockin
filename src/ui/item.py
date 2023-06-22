@@ -12,7 +12,7 @@ from pycord18n.extension import _ as _t
 
 class ItemListEmbed(ListEmbed):
   def _item_desc(self, index, item: Item):
-    desc = f"`{index+1}` {localized_attr(item, 'name')}"
+    desc = f"`{index+1}` ({item.metadata_['ItemLevel']}) {localized_attr(item, 'name')}"
     if item.metadata_["Flags"] & 0x8:
       desc += " (H)"
     return desc
@@ -30,7 +30,7 @@ class LootListEmbed(ListEmbed):
       desc += ":lock: " 
     if self._show_ids:
       desc += f"`[{loot.item.id}]` "
-    desc += f"{localized_attr(loot.item, 'name')}"
+    desc += f"({loot.item.metadata_['ItemLevel']}) {localized_attr(loot.item, 'name')}"
     if loot.item.metadata_["Flags"] & 0x8:
       desc += " (H)"
     datetime_to_display = loot.created_at
