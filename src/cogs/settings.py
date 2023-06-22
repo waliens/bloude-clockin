@@ -180,15 +180,15 @@ class SettingsCog(commands.Cog):
     except InvalidArgument as e:
       await ctx.respond(_t("settings.prio.role.error", error=str(e)))
 
-  @settings_group.command(description="")
+  @settings_group.command(description="Reset the DKP scores for the guild.")
   @commands.has_permissions(administrator=True)
-  @guild_only
+  @guild_only()
   async def reset_dkp(self, ctx):
     try:
       guild_id = str(ctx.guild.id)
       async with ctx.bot.db_session_class() as sess:
         async with sess.begin():
-          await reset_dkp(guild_id)
+          await reset_dkp(sess, guild_id)
           await ctx.respond(_t("settings.reset_dkp.success"), ephemeral=True)
     except InvalidArgument as e:
       await ctx.respond(_t("settings.reset_dkp.error", error=str(e)))

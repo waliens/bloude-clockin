@@ -3,6 +3,7 @@ from db_util.priorities import PrioTierEnum
 from models import Attendance, Character, Raid, Loot
 from db_util.wow_data import RaidSizeEnum
 from sqlalchemy import select, update
+from sqlalchemy.util import immutabledict
 
 
 class AbstrackDKPSystem(object):
@@ -63,9 +64,9 @@ async def compute_dkp_score(sess, character: Character, priorities: dict, dkp_sy
   return dkp
 
 async def reset_dkp(sess, guild_id: int):
-  character_select = select(Character.c.id).where(Character.id_guild == guild_id)
+  character_select = select(Character.id).where(Character.id_guild == guild_id)
   update_attendances = update(Attendance).where(Attendance.id_character.in_(character_select)).values(in_dkp=False)
   update_loots = update(Loot).where(Loot.id_character.in_(character_select)).values(in_dkp=False)
 
-  await sess.execute(update_attendances)
-  await sess.execute(update_loots)
+  await sess.execute(update_attendances, execution_options=immutabledict({"synchronize_session": 'fetch'}))
+  await sess.execute(update_loots, execution_options=immutabledict({"synchronize_session": 'fetch'}))
