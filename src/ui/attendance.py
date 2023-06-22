@@ -14,10 +14,16 @@ class CharacterAttendanceEmbed(Embed):
     self.title = _t("attendance.report.attendance_for", char_name=character.name)
     self.description = _t("attendance.report.for_raids_in", _from=datetime_range[0].strftime('%d/%m/%Y'), _to=datetime_range[1].strftime('%d/%m/%Y'))
     self._attendances = sorted(attendances, key=lambda a: a.raid_datetime)
-    field_value = "\n".join([
-      f"{attendance.raid_datetime.strftime('%d/%m/%Y %H:%M')}: {attendance.raid.short_name}{'10' if attendance.raid_size == RaidSizeEnum.RAID10 else '25'}" 
-      for attendance in self._attendances
-    ])
+
+    field_values = list()
+    for attendance in self._attendances:
+      desc = ""
+      if attendance.in_dkp:
+       desc += ":lock: " 
+      desc += f"{attendance.raid_datetime.strftime('%d/%m/%Y %H:%M')}: {attendance.raid.short_name}{'10' if attendance.raid_size == RaidSizeEnum.RAID10 else '25'}"
+      field_values.append(desc)
+
+    field_value = "\n".join(field_values)
     if len(field_value) == 0:
       field_value = _t("general.no_data")
     self.add_field(name=_t("attendance.report.raids"), value=field_value)
