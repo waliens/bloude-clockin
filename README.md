@@ -57,3 +57,31 @@ Set the bot cheer message (response to /cheer command):
 ```
 /settings cheer msg
 ```
+
+
+### Autogenerate migration
+
+1. Spawn empty database:
+
+´´´
+docker compose -f infra/docker-compose.yml down -v
+docker compose -f infra/docker-compose.yml up -d bot-database 
+´´´
+
+2. Launch and stop bot to run current migrations:
+
+```
+# Use launch.json config
+# Then CTRL+C
+```
+
+3. Run a container and inside run migration generation
+
+```
+# if possible use latest version of docker image (code will be overwritten anyway)
+docker run -v $(pwd)/src:/bot --entrypoint=/bin/sh --env-file infra/.env --network infra_default --rm -it  rmormont/guild-clockin:v0.3.6
+
+# then INSIDE the ocntainer run
+NO_ASYNC=1 alembic revision --autogenerate -m "SPECIFY_A_NAME_HERE"
+```
+
